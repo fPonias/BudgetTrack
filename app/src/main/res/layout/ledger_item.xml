@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:weightSum="1.0" android:layout_marginTop="5dp">
+    <ImageButton android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:background="@android:drawable/ic_menu_delete"
+        android:id="@+id/g_ledger_listitem_deleteBtn" android:layout_marginRight="10dp"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:text="Date"
+        android:id="@+id/g_ledger_listitem_dateTxt" android:layout_weight="0.4"
+        android:layout_gravity="center_vertical"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:text="Amount"
+        android:id="@+id/g_ledger_listitem_amountTxt" android:layout_weight="0.5"
+        android:layout_gravity="center_vertical"/>
+    <ImageView
+        android:layout_width="10dp"
+        android:layout_height="wrap_content"
+        android:scaleType="center"
+        android:background="@android:drawable/checkbox_on_background"
+        android:id="@+id/g_ledger_listitem_catastrophic" android:layout_weight="0.05"
+        android:layout_gravity="center"/>
+</LinearLayout>
