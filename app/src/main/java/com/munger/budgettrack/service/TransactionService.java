@@ -333,7 +333,7 @@ public class TransactionService
 
     public float getMonthlyBudget()
     {
-        float monthlyBudget = Main.instance.settings.monthlyIncome - Main.instance.settings.monthlyExpenses;
+        float monthlyBudget = Main.instance.cashFlowService.incomeTotal - Main.instance.cashFlowService.expenditureTotal;
         monthlyBudget -= Main.instance.settings.emergencyFund;
 
         return monthlyBudget;
@@ -381,5 +381,10 @@ public class TransactionService
         float dailyBudget = monthlyBudget / dayCount;
 
         return dailyBudget;
+    }
+
+    public void syncData()
+    {
+
     }
 }

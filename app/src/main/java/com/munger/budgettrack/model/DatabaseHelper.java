@@ -19,7 +19,7 @@ import java.util.Calendar;
 public class DatabaseHelper extends SQLiteOpenHelper
 {
     // If you change the database schema, you must increment the database version.
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 4;
     public static final String DATABASE_NAME = "Transaction.db";
 
     public SQLiteDatabase db;
@@ -61,17 +61,6 @@ public class DatabaseHelper extends SQLiteOpenHelper
         create(db);
     }
 
-    public void nuke()
-    {
-        db.execSQL("DROP TABLE IF EXISTS " + Transaction.TABLE_NAME);
-        db.execSQL("DROP INDEX IF EXISTS transactionDateIdx");
-        db.execSQL("DROP INDEX IF EXISTS transactionCatastropheIdx");
-
-        db.execSQL("DROP TABLE IF EXISTS " + RecurringCashFlow.TABLE_NAME);
-
-        create(db);
-    }
-
     private void create(SQLiteDatabase db)
     {
         db.execSQL(Transaction.getCreateTable());
@@ -91,6 +80,14 @@ public class DatabaseHelper extends SQLiteOpenHelper
         }
         
         db.execSQL(TransactionCategory.getCreateTable());
+
+        db.execSQL(CashFlow.getCreateTable());
+        trans = CashFlow.getCreateIndices();
+
+        for (int i = 0; i < trans.length; i++)
+        {
+            db.execSQL(trans[i]);
+        }
         
     }
 
@@ -114,6 +111,17 @@ public class DatabaseHelper extends SQLiteOpenHelper
                 ContentValues values = new ContentValues();
                 values.put("category", cat);
                 db.insert(TransactionCategory.TABLE_NAME, "", values);
+            }
+        }
+
+        if (oldVersion < 4)
+        {
+            db.execSQL(CashFlow.getCreateTable());
+            trans = CashFlow.getCreateIndices();
+
+            for (int i = 0; i < trans.length; i++)
+            {
+                db.execSQL(trans[i]);
             }
         }
     }
@@ -179,5 +187,10 @@ public class DatabaseHelper extends SQLiteOpenHelper
         cur.close();
 
         return ret;
+    }
+
+    public void syncData()
+    {
+
     }
 }

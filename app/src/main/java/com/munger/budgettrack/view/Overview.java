@@ -98,6 +98,14 @@ public class Overview extends Fragment
                 Main.instance.loadChart();
                 return true;
 
+            case R.id.action_income:
+                Main.instance.loadIncome();
+                return true;
+
+            case R.id.action_expenditures:
+                Main.instance.loadExpenditures();
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
 
@@ -122,10 +130,11 @@ public class Overview extends Fragment
         int day = cal.get(Calendar.DAY_OF_MONTH);
 
         Main.instance.transactionService.loadTransactions(year, month);
+        Main.instance.cashFlowService.loadData();
 
         int dayCount = cal.getMaximum(Calendar.DAY_OF_MONTH);
         float monthTotal = Main.instance.transactionService.getMonthlyTotal(year, month);
-        float monthaverage = monthTotal / dayCount;
+        float monthaverage = monthTotal / (day + 1.0f);
         monthaverage = Math.round(monthaverage * 100) / 100.0f;
 
         float cataTotal = Main.instance.transactionService.getCatastropheTotal(year, month);
@@ -136,24 +145,25 @@ public class Overview extends Fragment
         float monthlyBudget = Main.instance.transactionService.getMonthlyBudget();
         float remainingBudgetMonth = monthlyBudget - monthTotal;
         remainingBudgetMonth = Math.round(remainingBudgetMonth * 100) / 100.0f;
-        int remainingDaysMonth = dayCount - cal.get(Calendar.DAY_OF_MONTH);
+        int remainingDaysMonth = dayCount - day;
 
-        remainingDaysMonthTxt.setText(String.valueOf(remainingDaysMonth));
+        remainingDaysMonthTxt.setText(String.valueOf(remainingDaysMonth + 1));
         remainingBudgetMonthTxt.setText("$" + String.valueOf(remainingBudgetMonth));
         avgSpendingMonthTxt.setText("$" + String.valueOf(monthaverage));
         remainingCatastropheTxt.setText("$" + String.valueOf(remainingCata));
 
 
         float weekTotal = Main.instance.transactionService.getWeeklyTotal(year, month, day);
-        float weekaverage = weekTotal / 7.0f;
+        int dow = ((cal.get(Calendar.DAY_OF_WEEK) + 5) % 7);
+        float weekaverage = weekTotal / (dow + 1.0f);
         weekaverage = Math.round(weekaverage * 100) / 100.0f;
 
         float weeklyBudget = Main.instance.transactionService.getWeeklyBudget(year, month, day);
         float remainingBudgetWeek = weeklyBudget - weekTotal;
         remainingBudgetWeek = Math.round(remainingBudgetWeek * 100) / 100.0f;
-        int remainingDaysWeek = 7 - ((cal.get(Calendar.DAY_OF_WEEK) + 5) % 7);
+        int remainingDaysWeek = 7 - dow;
 
-        remainingDaysWeekTxt.setText(String.valueOf(remainingDaysWeek));
+        remainingDaysWeekTxt.setText(String.valueOf(remainingDaysWeek + 1));
         remainingBudgetWeekTxt.setText("$" + String.valueOf(remainingBudgetWeek));
         avgSpendingWeekTxt.setText("$" + String.valueOf(weekaverage));
     }

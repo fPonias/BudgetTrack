@@ -90,20 +90,12 @@ public class Settings extends Fragment
 
     private void load()
     {
-        String mexp = String.valueOf(Main.instance.settings.monthlyExpenses);
-        monthlyExpensesTxt.setText(mexp);
-        String minc = String.valueOf(Main.instance.settings.monthlyIncome);
-        monthlyIncomeTxt.setText(minc);
         String emerg = String.valueOf(Main.instance.settings.emergencyFund);
         emergencyFundsTxt.setText(emerg);
     }
 
     private void save()
     {
-        String mexp = monthlyExpensesTxt.getText().toString();
-        Main.instance.settings.monthlyExpenses = Float.parseFloat(mexp);
-        String minc = monthlyIncomeTxt.getText().toString();
-        Main.instance.settings.monthlyIncome = Float.parseFloat(minc);
         String emerg = emergencyFundsTxt.getText().toString();
         Main.instance.settings.emergencyFund = Float.parseFloat(emerg);
 

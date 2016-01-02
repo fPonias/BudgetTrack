@@ -105,17 +105,18 @@ public class Chart extends Fragment
         cal.setTimeInMillis(System.currentTimeMillis());
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH);
+        int day = cal.get(Calendar.DAY_OF_MONTH);
         cal.set(year, month, 0);
         int max = cal.getMaximum(Calendar.DAY_OF_MONTH);
         float budget = Main.instance.transactionService.getDailyBudget(year, month);
         float total = Main.instance.transactionService.getMonthlyTotal(year, month);
-        float average = total / max;
+        float average = total / (day + 1);
 
         String[] columns = new String[max];
         for (int i = 0; i < max; i++)
         {
-            String day = String.valueOf(i + 1);
-            columns[i] = day;
+            String d = String.valueOf(i + 1);
+            columns[i] = d;
         }
 
         CombinedData data = new CombinedData(columns);
@@ -123,7 +124,7 @@ public class Chart extends Fragment
         LineData lineData = new LineData();
 
 
-        generateGoalData(lineData, budget, max);
+        generateGoalData(lineData, budget / max, max);
         generateAverageData(lineData, average, max);
         data.setData(lineData);
         data.setData(generateBarData(cal, max));
@@ -166,7 +167,7 @@ public class Chart extends Fragment
 
         float budget = Main.instance.transactionService.getWeeklyBudget(year, month, day);
         float total = Main.instance.transactionService.getWeeklyTotal(year, month, day);
-        float average = total / max;
+        float average = total / (dow + 1);
 
         String[] columns = new String[max];
         for (int i = 0; i < max; i++)
@@ -180,7 +181,7 @@ public class Chart extends Fragment
         LineData lineData = new LineData();
 
 
-        generateGoalData(lineData, budget, max);
+        generateGoalData(lineData, budget / max, max);
         generateAverageData(lineData, average, max);
         data.setData(lineData);
         data.setData(generateBarData(cal, max));
