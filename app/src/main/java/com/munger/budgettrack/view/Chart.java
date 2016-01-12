@@ -33,6 +33,7 @@ import com.munger.budgettrack.service.TransactionService;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 /**
  * Created by codymunger on 12/28/15.
@@ -103,6 +104,7 @@ public class Chart extends Fragment
 
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(System.currentTimeMillis());
+        cal.setTimeZone(TimeZone.getDefault());
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
@@ -158,11 +160,12 @@ public class Chart extends Fragment
 
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(System.currentTimeMillis());
+        cal.setTimeZone(TimeZone.getDefault());
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
-        int dow = (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7;
-        cal.add(Calendar.DAY_OF_MONTH, -dow);
+        int dow = TransactionService.getdow(cal);
+        cal.add(Calendar.DAY_OF_MONTH, -(dow - 1));
         int max = 7;
 
         float budget = Main.instance.transactionService.getWeeklyBudget(year, month, day);

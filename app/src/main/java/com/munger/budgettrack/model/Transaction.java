@@ -10,6 +10,7 @@ import com.munger.budgettrack.Main;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.TimeZone;
 
 /**
  * Created by codymunger on 12/15/15.
@@ -124,9 +125,10 @@ public class Transaction implements Parcelable
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(date);
+        cal.setTimeZone(TimeZone.getDefault());
 
         int month = cal.get(Calendar.MONTH) + 1;
-        int day = cal.get(Calendar.DAY_OF_MONTH) + 1;
+        int day = cal.get(Calendar.DAY_OF_MONTH);
         String dt = String.valueOf(month) + "/" + String.valueOf(day) + "/" + cal.get(Calendar.YEAR);
         return dt;
     }

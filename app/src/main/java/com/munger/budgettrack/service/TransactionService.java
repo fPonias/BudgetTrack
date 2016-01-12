@@ -11,6 +11,7 @@ import com.munger.budgettrack.model.TransactionCategory;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.TimeZone;
 
 /**
  * Created by codymunger on 12/28/15.
@@ -81,6 +82,7 @@ public class TransactionService
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(System.currentTimeMillis());
+        cal.setTimeZone(TimeZone.getDefault());
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
@@ -90,6 +92,7 @@ public class TransactionService
     public void loadTransactions(int year, int month)
     {
         Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getDefault());
         cal.set(year, month, 0);
         cal.add(Calendar.MONTH, -1);
         long start = cal.getTimeInMillis();
@@ -245,6 +248,7 @@ public class TransactionService
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(date);
+        cal.setTimeZone(TimeZone.getDefault());
         return calendarToKey(cal);
     }
 
@@ -268,6 +272,7 @@ public class TransactionService
     public float getMonthlyTotal(int year, int month)
     {
         Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getDefault());
         cal.set(year, month, 0);
         float total = 0;
 
@@ -292,6 +297,7 @@ public class TransactionService
     public float getCatastropheTotal(int year, int month)
     {
         Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getDefault());
         cal.set(year, month, 0);
         float total = 0;
 
@@ -313,9 +319,10 @@ public class TransactionService
     public float getWeeklyTotal(int year, int month, int day)
     {
         Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getDefault());
         cal.set(year, month, day);
-        int weekday = ((cal.get(Calendar.DAY_OF_WEEK) + 5) % 7);
-        cal.add(Calendar.DAY_OF_MONTH, -weekday);
+        int dow = getdow(cal);
+        cal.add(Calendar.DAY_OF_MONTH, -(dow - 1));
 
         float ret = 0.0f;
         for (int i = 0; i < 7; i++)
@@ -342,6 +349,7 @@ public class TransactionService
     public float getWeeklyBudget(int year, int month, int day)
     {
         Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getDefault());
         cal.set(year, month, 0);
 
         cal.add(Calendar.MONTH, -1);
@@ -352,8 +360,8 @@ public class TransactionService
         float dailyBudgetNextMonth = getDailyBudget(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH));
 
         cal.set(year, month, day);
-        int weekday = ((cal.get(Calendar.DAY_OF_WEEK) + 5) % 7);
-        cal.add(Calendar.DAY_OF_MONTH, -weekday);
+        int dow = getdow(cal);
+        cal.add(Calendar.DAY_OF_MONTH, -(dow - 1));
 
         float ret = 0.0f;
         for (int i = 0; i < 7; i++)
@@ -375,12 +383,21 @@ public class TransactionService
     public float getDailyBudget(int year, int month)
     {
         Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getDefault());
         cal.set(year, month, 0);
         int dayCount = cal.getMaximum(Calendar.DAY_OF_MONTH);
         float monthlyBudget = getMonthlyBudget();
         float dailyBudget = monthlyBudget / dayCount;
 
         return dailyBudget;
+    }
+
+    public static int getdow(Calendar cal)
+    {
+        int dow = ((cal.get(Calendar.DAY_OF_WEEK)) % 7) - 1;
+        if (dow == 0) {dow = 7;}
+
+        return dow;
     }
 
     public void syncData()

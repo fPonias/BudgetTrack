@@ -25,6 +25,7 @@ import com.munger.budgettrack.model.TransactionCategory;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 public class Entry extends Fragment
 {
@@ -182,6 +183,7 @@ public class Entry extends Fragment
         String date = dateTxt.getText().toString().trim();
         String[] parts = date.split("[/\\-\\.]");
         Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getDefault());
         cal.set(Integer.parseInt(parts[2]), Integer.parseInt(parts[0]) - 1, Integer.parseInt(parts[1]) - 1);
         return cal.getTimeInMillis();
     }
