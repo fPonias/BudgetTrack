@@ -61,7 +61,7 @@ public class CashFlowService
     {
         Cursor cur = Main.instance.dbHelper.db.query(CashFlow.TABLE_NAME, new String[]{"date", "amount", "desc", "id"},
                 "", new String[]{},
-                null, null, "date DESC"
+                "date DESC"
         );
 
         int sz = cur.getCount();
@@ -71,7 +71,7 @@ public class CashFlowService
         {
             CashFlow t = new CashFlow();
             t.id = cur.getLong(3);
-            t.date = cur.getLong(0);
+            t.date = cur.getString(0);
             t.amount = cur.getFloat(1);
             t.desc = cur.getString(2);
 

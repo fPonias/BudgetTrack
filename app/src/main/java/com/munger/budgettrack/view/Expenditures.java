@@ -32,7 +32,7 @@ public class Expenditures extends CashFlowBase
     protected String getDeleteMessage(CashFlow tr)
     {
         String message = "Are you sure you want to delete ";
-        message += "$" + tr.amount + " expenditure from " + Transaction.getDateString(tr.date);
+        message += "$" + tr.amount + " expenditure from " + Transaction.keyToDateString(tr.date);
         return message;
     }
 

@@ -9,7 +9,7 @@ import com.munger.budgettrack.Main;
 /**
  * Created by codymunger on 12/28/15.
  */
-public class TransactionCategory implements Parcelable
+public class TransactionCategory implements DatabaseHelper.DatabaseProxyParcelable
 {
 
     public static final Parcelable.Creator<TransactionCategory> CREATOR = new Parcelable.Creator<TransactionCategory>()
@@ -61,20 +61,29 @@ public class TransactionCategory implements Parcelable
         return category;
     }
 
-    public void commit()
+    public ContentValues getContentValues()
     {
         ContentValues values = new ContentValues();
         values.put("category", category);
 
+        if (id == -1)
+            id = DatabaseHelper.getUniqueID();
+
+        values.put("id", id);
+        return values;
+    }
+
+    public void commit()
+    {
         if (id > -1)
-            Main.instance.dbHelper.db.update(TABLE_NAME, values, "id=?", new String[] {String.valueOf(id)});
+            Main.instance.dbHelper.db.update(TABLE_NAME, this);
         else
-            id = Main.instance.dbHelper.db.insert(TABLE_NAME, "", values);
+            Main.instance.dbHelper.db.insert(TABLE_NAME, this);
     }
 
     public void delete()
     {
-        Main.instance.dbHelper.db.delete(TABLE_NAME, "id=?", new String[]{String.valueOf(id)});
+        Main.instance.dbHelper.db.delete(TABLE_NAME, this);
         id = -1;
     }
 
@@ -86,5 +95,10 @@ public class TransactionCategory implements Parcelable
                 ")";
 
         return ret;
+    }
+
+    public static String[] getDefaultCategories()
+    {
+        return new String[] {"fun", "eating out", "food", "transport", "medicine", "hardware", "laundry", "clothes", "allowance"};
     }
 }

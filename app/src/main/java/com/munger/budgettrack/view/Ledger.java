@@ -80,7 +80,7 @@ public class Ledger extends Fragment
             Transaction tr = data.get(position);
             str.data = tr;
 
-            String dt = Transaction.getDateString(tr.date);
+            String dt = Transaction.keyToDateString(tr.date);
             str.dateLbl.setText(dt);
 
             str.amountLbl.setText("$" + String.valueOf(tr.amount));
@@ -217,7 +217,7 @@ public class Ledger extends Fragment
         String message = "Are you sure you want to delete ";
         if (tr.catastrophe)
             message += "catastrophic ";
-        message += "$" + tr.amount + " transaction from " + Transaction.getDateString(tr.date);
+        message += "$" + tr.amount + " transaction from " + Transaction.keyToDateString(tr.date);
         builder.setMessage(message);
 
         builder.setTitle("Delete transaction?");

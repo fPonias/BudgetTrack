@@ -77,7 +77,7 @@ public class Entry extends Fragment
         {
             data = b.getParcelable("data");
 
-            dateTxt.setText(Transaction.getDateString(data.date));
+            dateTxt.setText(Transaction.keyToDateString(data.date));
             descTxt.setText(data.desc);
             amountTxt.setText(String.valueOf(data.amount));
             catastropheBox.setChecked(data.catastrophe);
@@ -178,14 +178,15 @@ public class Entry extends Fragment
         ret.categoryId = cat.id;
     }
 
-    private long getDate()
+    private String getDate()
     {
         String date = dateTxt.getText().toString().trim();
+
         String[] parts = date.split("[/\\-\\.]");
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
-        cal.set(Integer.parseInt(parts[2]), Integer.parseInt(parts[0]) - 1, Integer.parseInt(parts[1]) - 1);
-        return cal.getTimeInMillis();
+        cal.set(Integer.parseInt(parts[2]), Integer.parseInt(parts[0]) - 1, Integer.parseInt(parts[1]), 12, 0);
+        return Transaction.dateToKey(cal);
     }
 
     private float getAmount()

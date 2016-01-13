@@ -29,8 +29,8 @@ public class TransactionService
     public ArrayList<Transaction> transactions;
     public int transYear = -1;
     public int transMonth = -1;
-    public long transStart = -1;
-    public long transEnd = -1;
+    public String transStart = "";
+    public String transEnd = "";
 
     public TransactionService()
     {
@@ -54,8 +54,8 @@ public class TransactionService
 
         transYear = state.getInt("transYear");
         transMonth = state.getInt("transMonth");
-        transStart = state.getLong("transStart");
-        transEnd = state.getLong("transEnd");
+        transStart = state.getString("transStart");
+        transEnd = state.getString("transEnd");
 
         sortTransactions(transactions);
     }
@@ -72,8 +72,8 @@ public class TransactionService
         b.putParcelableArray("transactions", tranArr);
         b.putInt("transYear", transYear);
         b.putInt("transMonth", transMonth);
-        b.putLong("transStart", transStart);
-        b.putLong("transEnd", transEnd);
+        b.putString("transStart", transStart);
+        b.putString("transEnd", transEnd);
 
         return b;
     }
@@ -93,17 +93,17 @@ public class TransactionService
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 0);
+        cal.set(year, month, 0, 0, 0);
         cal.add(Calendar.MONTH, -1);
-        long start = cal.getTimeInMillis();
+        String start = Transaction.dateToKey(cal.getTimeInMillis());
 
         cal.add(Calendar.MONTH, 2);
-        long end = cal.getTimeInMillis();
+        String end = Transaction.dateToKey(cal.getTimeInMillis());
 
 
         Cursor cur = Main.instance.dbHelper.db.query(Transaction.TABLE_NAME, new String[]{"date", "amount", "desc", "catastrophe", "categoryId", "id"},
                 "date>? AND date<=?", new String[]{String.valueOf(start), String.valueOf(end)},
-                null, null, "date ASC"
+                "date ASC"
         );
 
         int sz = cur.getCount();
@@ -113,7 +113,7 @@ public class TransactionService
         {
             Transaction t = new Transaction();
             t.id = cur.getLong(5);
-            t.date = cur.getLong(0);
+            t.date = cur.getString(0);
             t.amount = cur.getFloat(1);
             t.desc = cur.getString(2);
             t.catastrophe = (cur.getInt(3) == 1) ? true : false;
@@ -147,13 +147,17 @@ public class TransactionService
 
     public void commitTransaction(Transaction tr)
     {
-        if (tr.id == -1 && tr.date >= transStart && tr.date <= transEnd)
+        Calendar d = Transaction.keyToDate(tr.date);
+        Calendar s = Transaction.keyToDate(transStart);
+        Calendar e = Transaction.keyToDate(transEnd);
+        if (tr.id == -1 && d.after(s) && d.before(e))
         {
             int sz = transactions.size();
             for (int i = 0; i < sz; i++)
             {
                 Transaction trans = transactions.get(i);
-                if (trans.date <= tr.date)
+                Calendar tNum = Transaction.keyToDate(trans.date);
+                if (tNum.before(d))
                 {
                     transactions.add(i, tr);
                     break;
@@ -198,7 +202,7 @@ public class TransactionService
 
         for (Transaction t : list)
         {
-            String key = millisToKey(t.date);
+            String key = t.date;
 
             HashMap<String, ArrayList<Transaction>> sortedList = null;
             HashMap<String, Float> totaledList = null;
@@ -244,30 +248,6 @@ public class TransactionService
         }
     }
 
-    public String millisToKey(long date)
-    {
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(date);
-        cal.setTimeZone(TimeZone.getDefault());
-        return calendarToKey(cal);
-    }
-
-    public String calendarToKey(Calendar cal)
-    {
-        String mon = String.valueOf(cal.get(Calendar.MONTH));
-        if (mon.length() == 1)
-            mon = "0" + mon;
-
-        String day = String.valueOf(cal.get(Calendar.DAY_OF_MONTH));
-        if (day.length() == 1)
-            day = "0" + day;
-
-        String year = String.valueOf(cal.get(Calendar.YEAR));
-
-        String ret = year + "-" + mon + "-" + day;
-        return ret;
-    }
-
 
     public float getMonthlyTotal(int year, int month)
     {
@@ -280,7 +260,7 @@ public class TransactionService
         for (int i = 0; i < max; i++)
         {
             long date = cal.getTimeInMillis();
-            String key = millisToKey(date);
+            String key = Transaction.dateToKey(date);
 
             if (totaledTransactions.containsKey(key))
                 total += totaledTransactions.get(key);
@@ -305,7 +285,7 @@ public class TransactionService
         for (int i = 0; i < max; i++)
         {
             long date = cal.getTimeInMillis();
-            String key = millisToKey(date);
+            String key = Transaction.dateToKey(date);
 
             if (totaledCatastrophe.containsKey(key))
                 total += totaledCatastrophe.get(key);
@@ -328,7 +308,7 @@ public class TransactionService
         for (int i = 0; i < 7; i++)
         {
             long date = cal.getTimeInMillis();
-            String key = millisToKey(date);
+            String key = Transaction.dateToKey(date);
             if (totaledTransactions.containsKey(key))
                 ret += totaledTransactions.get(key);
 

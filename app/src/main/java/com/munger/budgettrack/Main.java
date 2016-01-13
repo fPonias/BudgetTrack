@@ -88,6 +88,7 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
         else
         {
             dbHelper = new DatabaseHelper(this);
+            dbHelper.nuke();
             settings = new Settings();
             transactionService = new TransactionService();
             cashFlowService = new CashFlowService();
@@ -140,6 +141,7 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
     {
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(savedInstanceState);
+
         savedInstanceState.putParcelable("dbHelper", dbHelper.getState());
         savedInstanceState.putParcelable("transactionService", transactionService.getState());
         savedInstanceState.putParcelable("cashFlowService", cashFlowService.getState());

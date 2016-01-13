@@ -3,6 +3,7 @@ package com.munger.budgettrack.model;
 import android.content.ContentValues;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.provider.ContactsContract;
 
 import com.munger.budgettrack.Main;
 
@@ -12,7 +13,7 @@ import java.util.HashMap;
 /**
  * Created by codymunger on 12/31/15.
  */
-public class CashFlow implements Parcelable
+public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
 {
     public static final Parcelable.Creator<CashFlow> CREATOR = new Parcelable.Creator<CashFlow>()
     {
@@ -32,12 +33,12 @@ public class CashFlow implements Parcelable
     public long id;
     public String desc;
     public float amount;
-    public long date;
+    public String date;
 
     public CashFlow()
     {
         id = -1;
-        date = System.currentTimeMillis();
+        date = "";
         desc = "";
         amount = 0.0f;
     }
@@ -45,7 +46,7 @@ public class CashFlow implements Parcelable
     public CashFlow(Parcel p)
     {
         id = p.readLong();
-        date = p.readLong();
+        date = p.readString();
         desc = p.readString();
         amount = p.readFloat();
     }
@@ -60,10 +61,26 @@ public class CashFlow implements Parcelable
     public void writeToParcel(Parcel dest, int flags)
     {
         dest.writeLong(id);
-        dest.writeLong(date);
+        dest.writeString(date);
         dest.writeString(desc);
         dest.writeFloat(amount);
     }
+
+    public ContentValues getContentValues()
+    {
+        ContentValues values = new ContentValues();
+        values.put("date", date);
+        values.put("amount", amount);
+        values.put("desc", desc);
+
+        if (id == -1)
+            id = DatabaseHelper.getUniqueID();
+
+        values.put("id", id);
+
+        return values;
+    }
+
 
     public void commit()
     {
@@ -73,14 +90,14 @@ public class CashFlow implements Parcelable
         values.put("desc", desc);
 
         if (id > -1)
-            Main.instance.dbHelper.db.update(TABLE_NAME, values, "id=?", new String[] {String.valueOf(id)});
+            Main.instance.dbHelper.db.update(TABLE_NAME, this);
         else
-            id = Main.instance.dbHelper.db.insert(TABLE_NAME, "", values);
+            Main.instance.dbHelper.db.insert(TABLE_NAME, this);
     }
 
     public void delete()
     {
-        Main.instance.dbHelper.db.delete(TABLE_NAME, "id=?", new String[]{String.valueOf(id)});
+        Main.instance.dbHelper.db.delete(TABLE_NAME, this);
         id = -1;
     }
 

@@ -15,7 +15,7 @@ import java.util.TimeZone;
 /**
  * Created by codymunger on 12/15/15.
  */
-public class Transaction implements Parcelable
+public class Transaction implements DatabaseHelper.DatabaseProxyParcelable
 {
     public static final Parcelable.Creator<Transaction> CREATOR = new Parcelable.Creator<Transaction>()
     {
@@ -33,7 +33,7 @@ public class Transaction implements Parcelable
     public static String TABLE_NAME = "transactions";
 
     public long id;
-    public long date;
+    public String date;
     public String desc;
     public float amount;
     public boolean catastrophe;
@@ -45,7 +45,7 @@ public class Transaction implements Parcelable
     public Transaction()
     {
         id = -1;
-        date = System.currentTimeMillis();
+        date = "00000000";
         desc = "";
         amount = 0.0f;
         catastrophe = false;
@@ -61,7 +61,7 @@ public class Transaction implements Parcelable
     public Transaction(Parcel p)
     {
         id = p.readLong();
-        date = p.readLong();
+        date = p.readString();
         desc = p.readString();
         amount = p.readFloat();
         catastrophe = (p.readByte() == 0) ? false : true;
@@ -93,14 +93,14 @@ public class Transaction implements Parcelable
     public void writeToParcel(Parcel dest, int flags)
     {
         dest.writeLong(id);
-        dest.writeLong(date);
+        dest.writeString(date);
         dest.writeString(desc);
         dest.writeFloat(amount);
         dest.writeByte((catastrophe) ? (byte) 1 : 0);
         dest.writeLong(categoryId);
     }
 
-    public void commit()
+    public ContentValues getContentValues()
     {
         ContentValues values = new ContentValues();
         values.put("date", date);
@@ -109,15 +109,25 @@ public class Transaction implements Parcelable
         values.put("catastrophe", (catastrophe) ? 1 : 0);
         values.put("categoryId", categoryId);
 
-        if (id > -1)
-            Main.instance.dbHelper.db.update(TABLE_NAME, values, "id=?", new String[] {String.valueOf(id)});
+        if (id == -1)
+            values.put("id", DatabaseHelper.getUniqueID());
         else
-            id = Main.instance.dbHelper.db.insert(TABLE_NAME, "", values);
+            values.put("id", id);
+
+        return values;
+    }
+
+    public void commit()
+    {
+        if (id > -1)
+            Main.instance.dbHelper.db.update(TABLE_NAME, this);
+        else
+            id = Main.instance.dbHelper.db.insert(TABLE_NAME, this);
     }
 
     public void delete()
     {
-        Main.instance.dbHelper.db.delete(TABLE_NAME, "id=?", new String[]{String.valueOf(id)});
+        Main.instance.dbHelper.db.delete(TABLE_NAME, this);
         id = -1;
     }
 
@@ -131,6 +141,59 @@ public class Transaction implements Parcelable
         int day = cal.get(Calendar.DAY_OF_MONTH);
         String dt = String.valueOf(month) + "/" + String.valueOf(day) + "/" + cal.get(Calendar.YEAR);
         return dt;
+    }
+
+    public static String dateToKey(long date)
+    {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(date);
+        return dateToKey(cal);
+    }
+
+    public static String dateToKey(Calendar cal)
+    {
+        String ret = "";
+
+        ret += String.valueOf(cal.get(Calendar.YEAR));
+
+
+        int month = cal.get(Calendar.MONTH) + 1;
+
+        if (month < 10)
+            ret += "0";
+
+        ret += String.valueOf(month);
+
+
+        int day = cal.get(Calendar.DAY_OF_MONTH);
+
+        if (day < 10)
+            ret += "0";
+
+        ret += String.valueOf(day);
+
+
+        return ret;
+    }
+
+    public static Calendar keyToDate(String key)
+    {
+        Calendar ret = Calendar.getInstance();
+
+        ret.setTimeZone(TimeZone.getDefault());
+
+        String year = key.substring(0, 4);
+        String month = key.substring(4, 6);
+        String day = key.substring(6);
+
+        ret.set(Integer.parseInt(year), Integer.parseInt(month) - 1, Integer.parseInt(day), 12, 0);
+        return ret;
+    }
+
+    public static String keyToDateString(String key)
+    {
+        Calendar cal = keyToDate(key);
+        return getDateString(cal.getTimeInMillis());
     }
 
     public static TransactionCategory getCategory(long id)
@@ -147,12 +210,11 @@ public class Transaction implements Parcelable
     {
         String ret = "CREATE TABLE " + TABLE_NAME + " (" +
                 "id INTEGER PRIMARY KEY," +
-                "date INTEGER," +
+                "date TEXT," +
                 "desc TEXT," +
                 "amount FLOAT," +
                 "catastrophe INTEGER," +
-                "categoryId INTEGER," +
-                "FOREIGN KEY(categoryId) REFERENCES " + TransactionCategory.TABLE_NAME + "(id)" +
+                "categoryId INTEGER" +
                 ")";
 
         return ret;
@@ -160,16 +222,7 @@ public class Transaction implements Parcelable
 
     public static String[] getUpdateTable(int oldversion)
     {
-        String[] ret = null;
-        if (oldversion < 2)
-        {
-            ret = new String[] {"ALTER TABLE " + TABLE_NAME + " ADD COLUMN categoryId INTEGER REFERENCES " + TransactionCategory.TABLE_NAME + "(id)"};
-        }
-
-        if (ret == null)
-            return new String[0];
-        else
-            return ret;
+        return new String[]{};
     }
 
     public static String[] getCreateIndices()

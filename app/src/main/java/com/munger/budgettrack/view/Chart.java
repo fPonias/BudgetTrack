@@ -240,7 +240,7 @@ public class Chart extends Fragment
 
         for(int i = 0; i < days; i++)
         {
-            String key = Main.instance.transactionService.calendarToKey(cal);
+            String key = Transaction.dateToKey(cal);
 
             if (Main.instance.transactionService.sortedTransactions.containsKey(key))
             {
@@ -310,6 +310,9 @@ public class Chart extends Fragment
         // xIndex (even if from different DataSets), since no values can be
         // drawn above each other.
         ArrayList<TransactionCategory> transCats = Transaction.transCats;
+        if (transCats == null)
+            transCats = new ArrayList<>();
+
         int sz = transCats.size();
         int count = 0;
         for (int i = 0; i < sz; i++)
