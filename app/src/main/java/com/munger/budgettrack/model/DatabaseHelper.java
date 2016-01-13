@@ -31,9 +31,11 @@ public class DatabaseHelper extends SQLiteOpenHelper
     public static class DatabaseProxy
     {
         private SQLiteDatabase db;
+        private DatabaseHelper parent;
 
-        public DatabaseProxy(SQLiteDatabase db)
+        public DatabaseProxy(DatabaseHelper parent, SQLiteDatabase db)
         {
+            this.parent = parent;
             this.db = db;
         }
 
@@ -54,10 +56,12 @@ public class DatabaseHelper extends SQLiteOpenHelper
             item.targetId = values.getAsLong("id");
             item.action = "UPDATE";
             item.date = System.currentTimeMillis();
-            item.id = DatabaseHelper.getUniqueID();
+            item.id = -1;
             item.obj = object;
             item.tableName = tableName;
             item.commit();
+
+            parent.changeLog.add(item);
 
             return db.update(tableName, values, "id=?", new String[]{String.valueOf(item.targetId)});
         }
@@ -69,10 +73,12 @@ public class DatabaseHelper extends SQLiteOpenHelper
             item.targetId = values.getAsLong("id");
             item.action = "DELETE";
             item.date = System.currentTimeMillis();
-            item.id = DatabaseHelper.getUniqueID();
+            item.id = -1;
             item.obj = object;
             item.tableName = tableName;
             item.commit();
+
+            parent.changeLog.add(item);
 
             return db.delete(tableName, "id=?", new String[]{String.valueOf(item.targetId)});
         }
@@ -84,10 +90,12 @@ public class DatabaseHelper extends SQLiteOpenHelper
             item.targetId = values.getAsLong("id");
             item.action = "CREATE";
             item.date = System.currentTimeMillis();
-            item.id = DatabaseHelper.getUniqueID();
+            item.id = -1;
             item.obj = object;
             item.tableName = tableName;
             item.commit();
+
+            parent.changeLog.add(item);
 
             return db.insert(tableName, "", values);
         }
@@ -113,13 +121,14 @@ public class DatabaseHelper extends SQLiteOpenHelper
     public Context context;
 
     public ArrayList<TransactionCategory> transactionCategories = null;
+    public ArrayList<DBDelta> changeLog = null;
 
     public DatabaseHelper(Context context)
     {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         this.context = context;
         database = getWritableDatabase();
-        db = new DatabaseProxy(database);
+        db = new DatabaseProxy(this, database);
     }
 
     public DatabaseHelper(Context context, Bundle state)
@@ -127,12 +136,17 @@ public class DatabaseHelper extends SQLiteOpenHelper
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         this.context = context;
         database = getWritableDatabase();
-        db = new DatabaseProxy(database);
+        db = new DatabaseProxy(this, database);
 
         Parcelable[] pararr = state.getParcelableArray("transactionCategories");
         transactionCategories = new ArrayList<>();
         for (Parcelable p : pararr)
             transactionCategories.add((TransactionCategory) p);
+
+        Parcelable[] deltaarr = state.getParcelableArray("changeLog");
+        changeLog = new ArrayList<>();
+        for (Parcelable p : deltaarr)
+            changeLog.add((DBDelta) p);
     }
 
     public Parcelable getState()
@@ -148,6 +162,16 @@ public class DatabaseHelper extends SQLiteOpenHelper
             tranCatArr[i] = transactionCategories.get(i);
         b.putParcelableArray("transactionCategories", tranCatArr);
 
+
+        if (changeLog == null)
+            changeLog = new ArrayList<>();
+
+        sz = changeLog.size();
+        DBDelta[] deltaArr = new DBDelta[sz];
+        for (int i = 0; i < sz; i++)
+            deltaArr[i] = changeLog.get(i);
+        b.putParcelableArray("changeLog", deltaArr);
+
         return b;
     }
 
@@ -159,7 +183,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
 
         ret *= 100000;
 
-        ret += Math.random() * (100000 - minRandom) + minRandom;
+        ret += ((int)(Math.random() * (100000 - minRandom))) + minRandom;
         lastUID = ret;
         return ret;
     }
@@ -180,7 +204,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
     public void onCreate(SQLiteDatabase db)
     {
         this.database = db;
-        this.db = new DatabaseProxy(database);
+        this.db = new DatabaseProxy(this, database);
         create();
     }
 
@@ -231,6 +255,9 @@ public class DatabaseHelper extends SQLiteOpenHelper
         {
             database.execSQL(trans[i]);
         }
+
+        changeLog = null;
+        loadChangeLog();
     }
 
     public void nuke()
@@ -250,6 +277,40 @@ public class DatabaseHelper extends SQLiteOpenHelper
 
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion)
     {
+    }
+
+    public ArrayList<DBDelta> loadChangeLog()
+    {
+        if (changeLog != null)
+            return changeLog;
+
+        changeLog = new ArrayList<>();
+
+        Cursor cur = database.query(DBDelta.TABLE_NAME, new String[]{"id", "tableName", "action", "targetId", "size", "obj", "date"},
+                "", new String[]{}, null, null, "date ASC");
+
+        boolean success = cur.moveToFirst();
+        while(success)
+        {
+            DBDelta item = new DBDelta();
+            item.id = cur.getLong(0);
+            item.tableName = cur.getString(1);
+            item.action = cur.getString(2);
+            item.targetId = cur.getLong(3);
+
+            int sz = cur.getInt(4);
+            byte[] objEnc = cur.getBlob(5);
+            Object o = unmarshall(objEnc, typeList.get(item.tableName));
+            item.obj = (Parcelable) o;
+
+            item.date = cur.getLong(6);
+            changeLog.add(item);
+
+            success = cur.moveToNext();
+        }
+
+        cur.close();
+        return changeLog;
     }
 
     public ArrayList<TransactionCategory> loadTransactionCategories()

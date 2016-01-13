@@ -35,7 +35,7 @@ public class CashFlowService
 
     public CashFlowService(Bundle state)
     {
-        Parcelable[] pararr = state.getParcelableArray("transactions");
+        Parcelable[] pararr = state.getParcelableArray("cashFlows");
         cashFlows = new ArrayList<>();
         for(Parcelable p : pararr)
             cashFlows.add((CashFlow) p);

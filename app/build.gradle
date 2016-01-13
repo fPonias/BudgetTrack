@@ -1,9 +1,16 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        config {
+            keyAlias 'debug'
+            keyPassword 'letmein'
+            storeFile file('/Users/codymunger/spirit/BudgetTrack/key/debug.jks')
+            storePassword 'letmein'
+        }
+    }
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
-
     defaultConfig {
         applicationId "com.munger.budgettrack"
         minSdkVersion 15
@@ -16,6 +23,9 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            signingConfig signingConfigs.config
+        }
     }
 }
 
@@ -24,6 +34,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.android.support:support-v4:23.1.1'
-    compile project(":MPChartLib")
+    compile project(':MPChartLib')
     compile 'com.google.android.gms:play-services:+'
 }
