@@ -35,7 +35,7 @@ public class IncomeEntry extends CashFlowEntryBase
 
     protected void constructCashFlow(CashFlow ret)
     {
-        ret.date = Transaction.dateToKey(System.currentTimeMillis());
+        ret.startDate = System.currentTimeMillis();
         ret.desc = descTxt.getText().toString();
         ret.amount = getAmount();
     }

@@ -112,7 +112,6 @@ public class DatabaseHelper extends SQLiteOpenHelper
         typeList = new HashMap<String, Parcelable.Creator>();
         typeList.put(Transaction.TABLE_NAME, Transaction.CREATOR);
         typeList.put(TransactionCategory.TABLE_NAME, TransactionCategory.CREATOR);
-        typeList.put(RecurringCashFlow.TABLE_NAME, RecurringCashFlow.CREATOR);
         typeList.put(CashFlow.TABLE_NAME, CashFlow.CREATOR);
     }
 
@@ -218,14 +217,6 @@ public class DatabaseHelper extends SQLiteOpenHelper
             database.execSQL(trans[i]);
         }
 
-        database.execSQL(RecurringCashFlow.getCreateTable());
-        trans = RecurringCashFlow.getCreateIndices();
-
-        for (int i = 0; i < trans.length; i++)
-        {
-            database.execSQL(trans[i]);
-        }
-
         database.execSQL(TransactionCategory.getCreateTable());
 
         database.execSQL(CashFlow.getCreateTable());
@@ -265,7 +256,6 @@ public class DatabaseHelper extends SQLiteOpenHelper
         database.execSQL("drop table if exists " + Transaction.TABLE_NAME);
         database.execSQL("drop table if exists " + TransactionCategory.TABLE_NAME);
         database.execSQL("drop table if exists " + CashFlow.TABLE_NAME);
-        database.execSQL("drop table if exists " + RecurringCashFlow.TABLE_NAME);
         database.execSQL("drop table if exists " + DBDelta.TABLE_NAME);
         create();
     }
@@ -337,39 +327,6 @@ public class DatabaseHelper extends SQLiteOpenHelper
         cur.close();
 
         return transactionCategories;
-    }
-
-    public ArrayList<RecurringCashFlow> getRecurringExpenses()
-    {
-        return getRecurringCashFlow("amount<0");
-    }
-
-    public ArrayList<RecurringCashFlow> getRecurringIncome()
-    {
-        return getRecurringCashFlow("amount>0");
-    }
-
-    private ArrayList<RecurringCashFlow> getRecurringCashFlow(String where)
-    {
-        Cursor cur = database.query(RecurringCashFlow.TABLE_NAME, new String[]{"amount", "desc", "id"},
-                where, new String[]{}, null, null, "id ASC");
-
-        ArrayList<RecurringCashFlow> ret = new ArrayList<>();
-        boolean success = cur.moveToFirst();
-        while (success)
-        {
-            RecurringCashFlow r = new RecurringCashFlow();
-            r.id = cur.getLong(2);
-            r.amount = cur.getFloat(0);
-            r.desc = cur.getString(1);
-
-            ret.add(r);
-            success = cur.moveToNext();
-        }
-
-        cur.close();
-
-        return ret;
     }
 
     public void syncData()

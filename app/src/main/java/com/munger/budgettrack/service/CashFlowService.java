@@ -59,9 +59,9 @@ public class CashFlowService
 
     public void loadData()
     {
-        Cursor cur = Main.instance.dbHelper.db.query(CashFlow.TABLE_NAME, new String[]{"date", "amount", "desc", "id"},
+        Cursor cur = Main.instance.dbHelper.db.query(CashFlow.TABLE_NAME, new String[]{"startDate", "endDate", "amount", "desc", "id"},
                 "", new String[]{},
-                "date DESC"
+                "startDate DESC"
         );
 
         int sz = cur.getCount();
@@ -70,10 +70,13 @@ public class CashFlowService
         while (success)
         {
             CashFlow t = new CashFlow();
-            t.id = cur.getLong(3);
-            t.date = cur.getString(0);
-            t.amount = cur.getFloat(1);
-            t.desc = cur.getString(2);
+            t.id = cur.getLong(4);
+            String startKey = cur.getString(0);
+            t.startDate = Transaction.keyToDate(startKey).getTimeInMillis();
+            String endKey = cur.getString(1);
+            t.endDate = Transaction.keyToDate(endKey).getTimeInMillis();
+            t.amount = cur.getFloat(2);
+            t.desc = cur.getString(3);
 
             cashFlows.add(t);
             success = cur.moveToNext();

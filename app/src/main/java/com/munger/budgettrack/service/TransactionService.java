@@ -29,8 +29,8 @@ public class TransactionService
     public ArrayList<Transaction> transactions;
     public int transYear = -1;
     public int transMonth = -1;
-    public String transStart = "";
-    public String transEnd = "";
+    public long transStart = 0;
+    public long transEnd = 0;
 
     public TransactionService()
     {
@@ -54,8 +54,8 @@ public class TransactionService
 
         transYear = state.getInt("transYear");
         transMonth = state.getInt("transMonth");
-        transStart = state.getString("transStart");
-        transEnd = state.getString("transEnd");
+        transStart = state.getLong("transStart");
+        transEnd = state.getLong("transEnd");
 
         sortTransactions(transactions);
     }
@@ -72,8 +72,8 @@ public class TransactionService
         b.putParcelableArray("transactions", tranArr);
         b.putInt("transYear", transYear);
         b.putInt("transMonth", transMonth);
-        b.putString("transStart", transStart);
-        b.putString("transEnd", transEnd);
+        b.putLong("transStart", transStart);
+        b.putLong("transEnd", transEnd);
 
         return b;
     }
@@ -95,10 +95,12 @@ public class TransactionService
         cal.setTimeZone(TimeZone.getDefault());
         cal.set(year, month, 0, 0, 0);
         cal.add(Calendar.MONTH, -1);
-        String start = Transaction.dateToKey(cal.getTimeInMillis());
+        transStart = cal.getTimeInMillis();
+        String start = Transaction.dateToKey(transStart);
 
         cal.add(Calendar.MONTH, 2);
-        String end = Transaction.dateToKey(cal.getTimeInMillis());
+        transEnd = cal.getTimeInMillis();
+        String end = Transaction.dateToKey(transEnd);
 
 
         Cursor cur = Main.instance.dbHelper.db.query(Transaction.TABLE_NAME, new String[]{"date", "amount", "desc", "catastrophe", "categoryId", "id"},
@@ -113,7 +115,8 @@ public class TransactionService
         {
             Transaction t = new Transaction();
             t.id = cur.getLong(5);
-            t.date = cur.getString(0);
+            String dateKey = cur.getString(0);
+            t.date = Transaction.keyToDate(dateKey).getTimeInMillis();
             t.amount = cur.getFloat(1);
             t.desc = cur.getString(2);
             t.catastrophe = (cur.getInt(3) == 1) ? true : false;
@@ -128,8 +131,6 @@ public class TransactionService
         transactions = ret;
         transYear = year;
         transMonth = month;
-        transStart = start;
-        transEnd = end;
 
         sortTransactions(transactions);
     }
@@ -147,17 +148,13 @@ public class TransactionService
 
     public void commitTransaction(Transaction tr)
     {
-        Calendar d = Transaction.keyToDate(tr.date);
-        Calendar s = Transaction.keyToDate(transStart);
-        Calendar e = Transaction.keyToDate(transEnd);
-        if (tr.id == -1 && d.after(s) && d.before(e))
+        if (tr.id == -1 && tr.date >= transStart && tr.date <= transEnd)
         {
             int sz = transactions.size();
             for (int i = 0; i < sz; i++)
             {
                 Transaction trans = transactions.get(i);
-                Calendar tNum = Transaction.keyToDate(trans.date);
-                if (tNum.before(d))
+                if (trans.date < tr.date)
                 {
                     transactions.add(i, tr);
                     break;
@@ -202,7 +199,7 @@ public class TransactionService
 
         for (Transaction t : list)
         {
-            String key = t.date;
+            String key = Transaction.dateToKey(t.date);
 
             HashMap<String, ArrayList<Transaction>> sortedList = null;
             HashMap<String, Float> totaledList = null;

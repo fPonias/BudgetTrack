@@ -33,12 +33,14 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     public long id;
     public String desc;
     public float amount;
-    public String date;
+    public long startDate;
+    public long endDate;
 
     public CashFlow()
     {
         id = -1;
-        date = "";
+        startDate = 0;
+        endDate = 0;
         desc = "";
         amount = 0.0f;
     }
@@ -46,7 +48,8 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     public CashFlow(Parcel p)
     {
         id = p.readLong();
-        date = p.readString();
+        startDate = p.readLong();
+        endDate = p.readLong();
         desc = p.readString();
         amount = p.readFloat();
     }
@@ -61,7 +64,8 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     public void writeToParcel(Parcel dest, int flags)
     {
         dest.writeLong(id);
-        dest.writeString(date);
+        dest.writeLong(startDate);
+        dest.writeLong(endDate);
         dest.writeString(desc);
         dest.writeFloat(amount);
     }
@@ -69,7 +73,8 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     public ContentValues getContentValues()
     {
         ContentValues values = new ContentValues();
-        values.put("date", date);
+        values.put("startDate", Transaction.dateToKey(startDate));
+        values.put("endDate", Transaction.dateToKey(endDate));
         values.put("amount", amount);
         values.put("desc", desc);
 
@@ -84,11 +89,6 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
 
     public void commit()
     {
-        ContentValues values = new ContentValues();
-        values.put("date", date);
-        values.put("amount", amount);
-        values.put("desc", desc);
-
         if (id > -1)
             Main.instance.dbHelper.db.update(TABLE_NAME, this);
         else
@@ -107,7 +107,8 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     {
         String ret = "CREATE TABLE " + TABLE_NAME + " (" +
                 "id INTEGER PRIMARY KEY," +
-                "date INTEGER," +
+                "startDate TEXT," +
+                "endDate TEXT," +
                 "desc TEXT," +
                 "amount FLOAT" +
                 ")";
@@ -118,7 +119,8 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     public static String[] getCreateIndices()
     {
         String[] ret = {
-                "CREATE INDEX cashFlowDateIdx ON " + TABLE_NAME + " (date)"
+                "CREATE INDEX cashFlowStartDateIdx ON " + TABLE_NAME + " (startDate)",
+                "CREATE INDEX cashFlowEndDateIdx ON " + TABLE_NAME + "(endDate)"
         };
 
         return ret;

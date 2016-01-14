@@ -32,7 +32,7 @@ public class Income extends CashFlowBase
     protected String getDeleteMessage(CashFlow tr)
     {
         String message = "Are you sure you want to delete ";
-        message += "$" + tr.amount + " income from " + Transaction.keyToDateString(tr.date);
+        message += "$" + tr.amount + " income from " + Transaction.getDateString(tr.startDate);
         return message;
     }
 

@@ -5,7 +5,7 @@ android {
         config {
             keyAlias 'debug'
             keyPassword 'letmein'
-            storeFile file('/Users/codymunger/spirit/BudgetTrack/key/debug.jks')
+            storeFile file('../key/debug.jks')
             storePassword 'letmein'
         }
     }

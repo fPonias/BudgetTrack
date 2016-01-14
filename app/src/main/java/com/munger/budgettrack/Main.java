@@ -90,7 +90,7 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
             dbHelper = new DatabaseHelper(this);
             dbHelper.loadTransactionCategories();
             dbHelper.loadChangeLog();
-            //dbHelper.nuke();
+            dbHelper.nuke();
             settings = new Settings();
             transactionService = new TransactionService();
             cashFlowService = new CashFlowService();

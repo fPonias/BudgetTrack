@@ -35,9 +35,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-/**
- * Created by codymunger on 12/28/15.
- */
 public class Chart extends Fragment
 {
     public CombinedChart chartMonthly;
@@ -108,7 +105,7 @@ public class Chart extends Fragment
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
-        cal.set(year, month, 0);
+        cal.set(year, month, 1);
         int max = cal.getMaximum(Calendar.DAY_OF_MONTH);
         float budget = Main.instance.transactionService.getDailyBudget(year, month);
         float total = Main.instance.transactionService.getMonthlyTotal(year, month);

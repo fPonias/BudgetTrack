@@ -33,7 +33,7 @@ public class Transaction implements DatabaseHelper.DatabaseProxyParcelable
     public static String TABLE_NAME = "transactions";
 
     public long id;
-    public String date;
+    public long date;
     public String desc;
     public float amount;
     public boolean catastrophe;
@@ -45,7 +45,7 @@ public class Transaction implements DatabaseHelper.DatabaseProxyParcelable
     public Transaction()
     {
         id = -1;
-        date = "00000000";
+        date = 0;
         desc = "";
         amount = 0.0f;
         catastrophe = false;
@@ -61,7 +61,7 @@ public class Transaction implements DatabaseHelper.DatabaseProxyParcelable
     public Transaction(Parcel p)
     {
         id = p.readLong();
-        date = p.readString();
+        date = p.readLong();
         desc = p.readString();
         amount = p.readFloat();
         catastrophe = (p.readByte() == 0) ? false : true;
@@ -93,7 +93,7 @@ public class Transaction implements DatabaseHelper.DatabaseProxyParcelable
     public void writeToParcel(Parcel dest, int flags)
     {
         dest.writeLong(id);
-        dest.writeString(date);
+        dest.writeLong(date);
         dest.writeString(desc);
         dest.writeFloat(amount);
         dest.writeByte((catastrophe) ? (byte) 1 : 0);
@@ -103,7 +103,7 @@ public class Transaction implements DatabaseHelper.DatabaseProxyParcelable
     public ContentValues getContentValues()
     {
         ContentValues values = new ContentValues();
-        values.put("date", date);
+        values.put("date", Transaction.dateToKey(date));
         values.put("amount", amount);
         values.put("desc", desc);
         values.put("catastrophe", (catastrophe) ? 1 : 0);
