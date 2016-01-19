@@ -6,11 +6,17 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.munger.budgettrack.Main;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -352,5 +358,75 @@ public class DatabaseHelper extends SQLiteOpenHelper
     public static <T> T unmarshall(byte[] bytes, Parcelable.Creator<T> creator) {
         Parcel parcel = unmarshall(bytes);
         return creator.createFromParcel(parcel);
+    }
+
+    public void backupToStorage(String outPath) throws IOException
+    {
+        File fileDir = Main.instance.getFilesDir();
+        final String inFileName = fileDir.getParentFile().getAbsolutePath() + "/databases/" + DATABASE_NAME;
+        File outFile = new File(outPath);
+        File dbFile = new File(inFileName);
+        outFile.createNewFile();
+
+        FileInputStream fis = new FileInputStream(dbFile);;
+        OutputStream output = new FileOutputStream(outFile);
+
+        // Transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[4096];
+        int length;
+        while ((length = fis.read(buffer))>0)
+        {
+            output.write(buffer, 0, length);
+        }
+
+        // Close the streams
+        output.flush();
+        try {output.close();} catch(Exception e){}
+        try {fis.close();} catch(Exception e){}
+
+    }
+
+    public void restoreFromStorage(String inPath) throws IOException
+    {
+        File backupFile = new File(inPath);
+
+        if (!backupFile.exists())
+            throw new IOException("backup file inPath doesn't exist");
+
+        File fileDir = Main.instance.getFilesDir();
+        final String dbFilePath = fileDir.getParentFile().getAbsolutePath() + "/databases/" + DATABASE_NAME;
+        File dbFile = new File(dbFilePath);
+        if (dbFile.exists())
+            dbFile.delete();
+
+        database.close();
+
+        FileInputStream fis = new FileInputStream(backupFile);
+        FileOutputStream fos = new FileOutputStream(dbFile);
+
+
+        // Transfer bytes from the inputfile to the outputfile
+        byte[] buffer = new byte[4096];
+        int length;
+        while ((length = fis.read(buffer))>0)
+        {
+            fos.write(buffer, 0, length);
+        }
+
+        // Close the streams
+        fos.flush();
+        try {fos.close();} catch(Exception e){}
+        try {fis.close();} catch(Exception e){}
+
+
+        database = getWritableDatabase();
+        db = new DatabaseProxy(this, database);
+
+        loadTransactionCategories();
+        loadChangeLog();
+        Main.instance.transactionService.loadCurrentTransactions();
+        Main.instance.cashFlowService.loadData();
+
+        Main.instance.reloadView();
     }
 }

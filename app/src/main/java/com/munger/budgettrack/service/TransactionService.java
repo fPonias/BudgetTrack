@@ -227,7 +227,6 @@ public class TransactionService
             float newTotal = totaledList.get(key) + t.amount;
             totaledList.put(key, newTotal);
 
-
             String category = Transaction.getCategory(t.categoryId).category;
             if (!sortedCategory.containsKey(category))
                 sortedCategory.put(category, new ArrayList<Transaction>());
@@ -372,7 +371,7 @@ public class TransactionService
     public static int getdow(Calendar cal)
     {
         int dow = ((cal.get(Calendar.DAY_OF_WEEK)) % 7) - 1;
-        if (dow == 0) {dow = 7;}
+        if (dow < 1) {dow += 7;}
 
         return dow;
     }

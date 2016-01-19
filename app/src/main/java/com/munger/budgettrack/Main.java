@@ -3,12 +3,15 @@ package com.munger.budgettrack;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -90,7 +93,7 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
             dbHelper = new DatabaseHelper(this);
             dbHelper.loadTransactionCategories();
             dbHelper.loadChangeLog();
-            dbHelper.nuke();
+            //dbHelper.nuke();
             settings = new Settings();
             transactionService = new TransactionService();
             cashFlowService = new CashFlowService();
@@ -262,6 +265,11 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
         if (sz == 1)
             actionBar.setDisplayHomeAsUpEnabled(false);
 
+        if (reloadDepth > 0)
+        {
+            reloadDepth--;
+        }
+
         return true;
     }
 
@@ -283,6 +291,23 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
         ft.add(R.id.appId, frag, id);
         ft.addToBackStack(id);
         ft.commit();
+
+
+        View view = this.getCurrentFocus();
+        if (view != null)
+        {
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 
+    public int reloadDepth = 0;
+
+    public void reloadView()
+    {
+        FragmentManager fm = getFragmentManager();
+        int sz = fm.getBackStackEntryCount();
+
+        reloadDepth = sz;
+    }
 }

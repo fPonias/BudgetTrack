@@ -203,7 +203,9 @@ public class Ledger extends Fragment
         for (Transaction tr : data)
         {
             LedgerViewStruct view = viewIndex.get(tr.id);
-            view.setEditable(editable);
+
+            if (view != null)
+                view.setEditable(editable);
         }
 
         list.invalidate();
