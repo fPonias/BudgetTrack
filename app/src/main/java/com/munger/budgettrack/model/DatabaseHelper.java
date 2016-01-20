@@ -337,7 +337,16 @@ public class DatabaseHelper extends SQLiteOpenHelper
 
     public void syncData()
     {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(System.currentTimeMillis());
 
+        try
+        {
+            ArrayList<DBDelta> remoteList = Main.instance.remoteStorageService.getRemoteChangelog(cal);
+        }
+        catch(IOException e){
+            System.console().printf("failed to load remote changelog");
+        }
     }
 
     public static byte[] marshall(Parcelable parceable) {

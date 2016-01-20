@@ -23,6 +23,7 @@ import com.munger.budgettrack.model.DatabaseHelper;
 import com.munger.budgettrack.model.Settings;
 import com.munger.budgettrack.model.Transaction;
 import com.munger.budgettrack.service.CashFlowService;
+import com.munger.budgettrack.service.RemoteStorageService;
 import com.munger.budgettrack.service.TransactionService;
 import com.munger.budgettrack.view.Chart;
 import com.munger.budgettrack.view.Entry;
@@ -37,7 +38,7 @@ import com.munger.budgettrack.view.Overview;
 /**
  * Created by codymunger on 12/22/15.
  */
-public class Main extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
+public class Main extends AppCompatActivity
 {
     protected FrameLayout root;
     public ActionBar actionBar;
@@ -47,8 +48,7 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
     public Settings settings;
     public TransactionService transactionService;
     public CashFlowService cashFlowService;
-
-    protected GoogleApiClient googleClient;
+    public RemoteStorageService remoteStorageService;
 
     public static Main instance;
 
@@ -64,13 +64,6 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
         setContentView(root, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         actionBar = getSupportActionBar();
 
-        googleClient = new GoogleApiClient.Builder(this)
-                .addApi(Drive.API)
-                .addScope(Drive.SCOPE_FILE)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
-
 
 
         if (savedInstanceState != null)
@@ -79,6 +72,7 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
             settings = new Settings();
             transactionService = new TransactionService(savedInstanceState.getBundle("transactionService"));
             cashFlowService = new CashFlowService(savedInstanceState.getBundle("cashFlowService"));
+            remoteStorageService = new RemoteStorageService(this);
 
             currentFrag = savedInstanceState.getString("currentFragment");
 
@@ -97,6 +91,7 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
             settings = new Settings();
             transactionService = new TransactionService();
             cashFlowService = new CashFlowService();
+            remoteStorageService = new RemoteStorageService(this);
         }
 
 
@@ -107,38 +102,8 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
     @Override
     public void onStart()
     {
-        googleClient.connect();
+        remoteStorageService.connect();
         super.onStart();
-    }
-
-    @Override
-    public void onConnected(Bundle bundle)
-    {
-        dbHelper.syncData();
-        transactionService.syncData();
-    }
-
-    @Override
-    public void onConnectionSuspended(int i)
-    {
-
-    }
-
-    protected final static int RESOLVE_CONNECTION_REQUEST_CODE = 12;
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult)
-    {
-        if (connectionResult.hasResolution())
-        {
-            try {
-                connectionResult.startResolutionForResult(this, RESOLVE_CONNECTION_REQUEST_CODE);
-            } catch (IntentSender.SendIntentException e) {
-                // Unable to resolve, message user appropriately
-            }
-        } else {
-            GooglePlayServicesUtil.getErrorDialog(connectionResult.getErrorCode(), this, 0).show();
-        }
     }
 
     @Override
@@ -153,6 +118,8 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
         savedInstanceState.putString("currentFragment", currentFrag);
     }
 
+    public final static int RESOLVE_CONNECTION_REQUEST_CODE = 12;
+
     @Override
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data)
     {
@@ -161,7 +128,7 @@ public class Main extends AppCompatActivity implements GoogleApiClient.Connectio
             case RESOLVE_CONNECTION_REQUEST_CODE:
                 if (resultCode == RESULT_OK)
                 {
-                    googleClient.connect();
+                    remoteStorageService.connect();
                 }
                 break;
         }
