@@ -11,6 +11,8 @@ import com.munger.budgettrack.model.TransactionCategory;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.TimeZone;
 
 /**
@@ -24,6 +26,8 @@ public class TransactionService
     public HashMap<String, Float> totaledTransactions;
     public HashMap<String, Float> totaledCatastrophe;
     public HashMap<String, Float> totaledCategory;
+    public HashMap<String, Float> totaledCategorySansCatastrophe;
+    public HashMap<String, Float> trendingAverages;
     public HashMap<Long, Transaction> indexedTransactions;
 
     public ArrayList<Transaction> transactions;
@@ -31,6 +35,7 @@ public class TransactionService
     public int transMonth = -1;
     public long transStart = 0;
     public long transEnd = 0;
+    public int trendLength = 5;
 
     public TransactionService()
     {
@@ -40,6 +45,8 @@ public class TransactionService
         totaledCatastrophe = new HashMap<>();
         sortedCategory = new HashMap<>();
         totaledCategory = new HashMap<>();
+        totaledCategorySansCatastrophe = new HashMap<>();
+        trendingAverages = new HashMap<>();
         indexedTransactions = new HashMap<>();
 
         transactions = new ArrayList<>();
@@ -195,11 +202,19 @@ public class TransactionService
         totaledCatastrophe = new HashMap<>();
         sortedCategory = new HashMap<>();
         totaledCategory = new HashMap<>();
+        totaledCategorySansCatastrophe = new HashMap<>();
+        trendingAverages = new HashMap<>();
+
         indexedTransactions = new HashMap<>();
+
+        long smallestDate = Long.MAX_VALUE;
 
         for (Transaction t : list)
         {
             String key = Transaction.dateToKey(t.date);
+
+            if (t.date < smallestDate)
+                smallestDate = t.date;
 
             HashMap<String, ArrayList<Transaction>> sortedList = null;
             HashMap<String, Float> totaledList = null;
@@ -234,16 +249,65 @@ public class TransactionService
             sortedCategory.get(category).add(t);
 
             if (!totaledCategory.containsKey(category))
+            {
                 totaledCategory.put(category, 0.0f);
+                totaledCategorySansCatastrophe.put(category, 0.0f);
+            }
 
             newTotal = totaledCategory.get(category) + t.amount;
             totaledCategory.put(category, newTotal);
 
+            if (t.catastrophe == false)
+            {
+                newTotal = totaledCategorySansCatastrophe.get(category) + t.amount;
+                totaledCategorySansCatastrophe.put(category, newTotal);
+            }
+
 
             indexedTransactions.put(t.id, t);
         }
+
+        ArrayList<Float> valueQueue = new ArrayList<>();
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(transStart);
+        while (cal.getTimeInMillis() <= transEnd)
+        {
+            String key = Transaction.dateToKey(cal);
+            float value = 0;
+            if (totaledTransactions.containsKey(key))
+                value = totaledTransactions.get(key);
+
+            valueQueue.add(value);
+
+            if (valueQueue.size() == trendLength + 1)
+                valueQueue.remove(0);
+
+            if (valueQueue.size() == trendLength)
+            {
+                float total = 0;
+                for (float item : valueQueue)
+                    total += item;
+
+                float average = total / trendLength;
+                trendingAverages.put(key, average);
+            }
+
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+        }
     }
 
+    public float getTrend(int year, int month, int day)
+    {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getDefault());
+        cal.set(year, month, day);
+        String key = Transaction.dateToKey(cal);
+
+        if (trendingAverages.containsKey(key))
+            return trendingAverages.get(key);
+        else
+            return 0;
+    }
 
     public float getMonthlyTotal(int year, int month)
     {

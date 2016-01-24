@@ -1,7 +1,9 @@
 package com.munger.budgettrack.view;
 
 import android.app.Fragment;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -13,6 +15,8 @@ import android.widget.TextView;
 import com.munger.budgettrack.Main;
 import com.munger.budgettrack.R;
 import com.munger.budgettrack.service.TransactionService;
+
+import org.w3c.dom.Text;
 
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -32,6 +36,10 @@ public class Overview extends Fragment
     public TextView avgSpendingMonthTxt;
     public TextView totalBudgetMonthTxt;
     public TextView totalAvgMonthTxt;
+
+    public TextView trendTxt;
+    public TextView trendDeltaTxt;
+    public TextView projectedSurplusTxt;
 
     public TextView remainingCatastropheTxt;
 
@@ -66,6 +74,10 @@ public class Overview extends Fragment
         avgSpendingMonthTxt = (TextView) ret.findViewById(R.id.g_overview_averageMonthTxt);
         totalBudgetMonthTxt = (TextView) ret.findViewById(R.id.g_overview_maxBudgetMonth);
         totalAvgMonthTxt = (TextView) ret.findViewById(R.id.g_overview_goalAverageMonth);
+
+        trendTxt = (TextView) ret.findViewById(R.id.g_overview_trendTxt);
+        trendDeltaTxt = (TextView) ret.findViewById(R.id.g_overview_trendChangeTxt);
+        projectedSurplusTxt = (TextView) ret.findViewById(R.id.g_overview_projectedSurplus);
 
         remainingCatastropheTxt = (TextView) ret.findViewById(R.id.g_overview_remainingCatstropheTxt);
 
@@ -136,8 +148,40 @@ public class Overview extends Fragment
         super.onStart();
     }
 
+    private String getFormattedAmount(float amount)
+    {
+        int hundo = Math.round(amount * 100);
+        float val = hundo / 100.0f;
+
+        int extraZeros = 0;
+        if (Math.abs(hundo) % 10 == 0)
+            extraZeros++;
+
+        StringBuilder builder = new StringBuilder();
+        builder.append('$');
+        builder.append(val);
+
+        for (int i = 0; i < extraZeros; i++)
+            builder.append('0');
+
+        return builder.toString();
+    }
+
+    private void setColor(TextView view, float warnValue, float minValue, float actualValue, float maxValue, int warnColor, int negColor, int defaultColor)
+    {
+        if (actualValue < minValue || actualValue > maxValue)
+            view.setTextColor(negColor);
+        else if (actualValue <= warnValue && actualValue >= minValue)
+            view.setTextColor(warnColor);
+        else
+            view.setTextColor(defaultColor);
+    }
+
     public void update()
     {
+        int defaultTextColor = remainingDaysMonthTxt.getCurrentTextColor();
+        int warningTextColor = ContextCompat.getColor(Main.instance, R.color.colorWarning);
+        int negativeTextColor = ContextCompat.getColor(Main.instance, R.color.colorNegative);
         com.munger.budgettrack.model.Settings settings = Main.instance.settings;
 
         Calendar cal = Calendar.getInstance();
@@ -153,46 +197,61 @@ public class Overview extends Fragment
         int dayCount = cal.getMaximum(Calendar.DAY_OF_MONTH);
         float monthTotal = Main.instance.transactionService.getMonthlyTotal(year, month);
         float monthaverage = monthTotal / (day + 1.0f);
-        monthaverage = Math.round(monthaverage * 100) / 100.0f;
-        monthTotal = Math.round(monthTotal * 100) / 100.0f;
 
         float cataTotal = Main.instance.transactionService.getCatastropheTotal(year, month);
         float remainingCata = Main.instance.settings.emergencyFund - cataTotal;
         float cataaverate = cataTotal / dayCount;
-        cataaverate = Math.round(cataaverate * 100) / 100.0f;
+
 
         float monthlyBudget = Main.instance.transactionService.getMonthlyBudget();
-        float monthlyBudgetGoal = Math.round(monthlyBudget / (double) dayCount * 100) / 100.0f;
+        float monthlyBudgetGoal = (float) (monthlyBudget / (double) dayCount);
         float remainingBudgetMonth = monthlyBudget - monthTotal;
-        remainingBudgetMonth = Math.round(remainingBudgetMonth * 100) / 100.0f;
-        monthlyBudget = Math.round(monthlyBudget * 100) / 100.0f;
+
+        float trend = Main.instance.transactionService.getTrend(year, month, day);
+        cal.add(Calendar.DAY_OF_MONTH, -1);
+        float yesterTrend = Main.instance.transactionService.getTrend(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
+        float trendDelta = trend - yesterTrend;
+        trendTxt.setText(getFormattedAmount(trend));
+        String delta = (trendDelta >= 0) ? "+" : "";
+        delta += getFormattedAmount(trendDelta).substring(1);
+        trendDeltaTxt.setText(delta);
+
+        float trendGuess = (yesterTrend + monthaverage) * 0.5f;
+        float surplusRemainder = trendGuess * (dayCount - day);
+        float surplus = remainingBudgetMonth - surplusRemainder;
+        if (remainingCata < 0)
+            surplus += remainingCata;
 
 
         remainingDaysMonthTxt.setText(String.valueOf(day) + "/");
         totalDaysMonthTxt.setText(String.valueOf(dayCount));
-        remainingBudgetMonthTxt.setText("$" + String.valueOf(remainingBudgetMonth));
-        avgSpendingMonthTxt.setText("$" + String.valueOf(monthaverage));
-        totalBudgetMonthTxt.setText("$" + String.valueOf(monthlyBudget));
-        totalAvgMonthTxt.setText("$" + String.valueOf(monthlyBudgetGoal));
+        remainingBudgetMonthTxt.setText(getFormattedAmount(remainingBudgetMonth));
+        setColor(remainingBudgetMonthTxt, 0, 0, remainingBudgetMonth, Float.MAX_VALUE, warningTextColor, negativeTextColor, defaultTextColor);
+        avgSpendingMonthTxt.setText(getFormattedAmount(monthaverage));
+        setColor(avgSpendingMonthTxt, 0, 0, monthaverage, monthlyBudgetGoal, warningTextColor, negativeTextColor, defaultTextColor);
+        totalBudgetMonthTxt.setText(getFormattedAmount(monthlyBudget));
+        totalAvgMonthTxt.setText(getFormattedAmount(monthlyBudgetGoal));
+        projectedSurplusTxt.setText(getFormattedAmount(surplus));
+        setColor(projectedSurplusTxt, 0, 0, surplus, Float.MAX_VALUE, warningTextColor, negativeTextColor, defaultTextColor);
 
-        remainingCatastropheTxt.setText("$" + String.valueOf(remainingCata));
+        remainingCatastropheTxt.setText(getFormattedAmount(remainingCata));
+        setColor(remainingCatastropheTxt, 0, 0, remainingCata, Float.MAX_VALUE, warningTextColor, negativeTextColor, defaultTextColor);
 
 
         float weekTotal = Main.instance.transactionService.getWeeklyTotal(year, month, day);
-        int dow = TransactionService.getdow(cal);
+        int dow = TransactionService.getdow(cal) + 1;
         float weekaverage = weekTotal / (dow);
-        weekaverage = Math.round(weekaverage * 100) / 100.0f;
 
         float weeklyBudget = Main.instance.transactionService.getWeeklyBudget(year, month, day);
-        float weeklyAverageGoal = Math.round(weeklyBudget / 7.0f * 100) / 100.0f;
+        float weeklyAverageGoal = weeklyBudget / 7.0f;
         float remainingBudgetWeek = weeklyBudget - weekTotal;
-        remainingBudgetWeek = Math.round(remainingBudgetWeek * 100) / 100.0f;
-        weeklyBudget = Math.round(weeklyBudget * 100) / 100.0f;
 
         remainingDaysWeekTxt.setText(String.valueOf(dow) + "/");
-        remainingBudgetWeekTxt.setText("$" + String.valueOf(remainingBudgetWeek));
-        avgSpendingWeekTxt.setText("$" + String.valueOf(weekaverage));
-        totalBudgetWeekTxt.setText("$" + String.valueOf(weeklyBudget));
-        totalAvgWeekTxt.setText("$" + String.valueOf(weeklyAverageGoal));
+        remainingBudgetWeekTxt.setText(getFormattedAmount(remainingBudgetWeek));
+        setColor(remainingBudgetWeekTxt, 0, 0, remainingBudgetWeek, Float.MAX_VALUE, warningTextColor, negativeTextColor, defaultTextColor);
+        avgSpendingWeekTxt.setText(getFormattedAmount(weekaverage));
+        setColor(avgSpendingWeekTxt, 0, 0, weekaverage, weeklyAverageGoal, warningTextColor, negativeTextColor, defaultTextColor);
+        totalBudgetWeekTxt.setText(getFormattedAmount(weeklyBudget));
+        totalAvgWeekTxt.setText(getFormattedAmount(weeklyAverageGoal));
     }
 }

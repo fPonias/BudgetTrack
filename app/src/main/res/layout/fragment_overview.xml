@@ -35,10 +35,11 @@
                 <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:orientation="horizontal" android:layout_gravity="center_horizontal">
                     <TextView android:text="7/"
-                        android:textSize="16pt"
+                        android:textSize="14pt"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:id="@+id/g_overview_remainingDaysWeekTxt"/>
+                        android:id="@+id/g_overview_remainingDaysWeekTxt"
+                        android:textColor="#757575" />
                     <TextView android:text="7"
                         android:textSize="10pt"
                         android:layout_width="wrap_content"
@@ -58,7 +59,7 @@
 
 
                 <TextView android:text="$1000" android:layout_gravity="center_horizontal"
-                    android:textSize="16pt"
+                    android:textSize="14pt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/g_overview_remainingBudgetWeekTxt"/>
@@ -74,7 +75,7 @@
 
 
                 <TextView android:text="$1000" android:layout_gravity="center_horizontal"
-                    android:textSize="16pt"
+                    android:textSize="14pt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/g_overview_averageWeekTxt"/>
@@ -97,7 +98,7 @@
 
 
                 <TextView android:text="$1000" android:layout_gravity="center_horizontal"
-                    android:textSize="16pt"
+                    android:textSize="14pt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/g_overview_maxBudgetWeek"/>
@@ -114,7 +115,7 @@
 
 
                 <TextView android:text="$1000" android:layout_gravity="center_horizontal"
-                    android:textSize="16pt"
+                    android:textSize="14pt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/g_overview_goalAverageWeek"/>
@@ -144,7 +145,7 @@
                 <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:orientation="horizontal" android:layout_gravity="center_horizontal">
                     <TextView android:text="7/"
-                        android:textSize="16pt"
+                        android:textSize="14pt"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:id="@+id/g_overview_remainingDaysMonthTxt"/>
@@ -167,7 +168,7 @@
 
 
                 <TextView android:text="$1000" android:layout_gravity="center_horizontal"
-                    android:textSize="16pt"
+                    android:textSize="14pt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/g_overview_remainingBudgetMonthTxt"/>
@@ -183,7 +184,7 @@
 
 
                 <TextView android:text="$1000" android:layout_gravity="center_horizontal"
-                    android:textSize="16pt"
+                    android:textSize="14pt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/g_overview_averageMonthTxt"/>
@@ -206,7 +207,7 @@
 
 
                 <TextView android:text="$1000" android:layout_gravity="center_horizontal"
-                    android:textSize="16pt"
+                    android:textSize="14pt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/g_overview_maxBudgetMonth"/>
@@ -215,7 +216,7 @@
                     android:layout_height="wrap_content"
                     android:text="Total Budget"/>
             </LinearLayout>
-
+            
             <LinearLayout android:orientation="vertical"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -223,7 +224,7 @@
 
 
                 <TextView android:text="$1000" android:layout_gravity="center_horizontal"
-                    android:textSize="16pt"
+                    android:textSize="14pt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/g_overview_goalAverageMonth"/>
@@ -244,8 +245,7 @@
         <LinearLayout android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:weightSum="1.0"
-            android:layout_marginBottom="10dp" android:layout_marginTop="10dp">
+            android:weightSum="1.0" android:layout_marginTop="10dp">
             <LinearLayout android:orientation="vertical"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -253,7 +253,7 @@
 
 
                 <TextView android:text="$100" android:layout_gravity="center_horizontal"
-                    android:textSize="16pt"
+                    android:textSize="14pt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/g_overview_remainingCatstropheTxt"/>
@@ -261,6 +261,69 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Remaining catastrohpe"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textStyle="bold" android:layout_marginTop="10dp"
+            android:text="Trend"/>
+
+        <LinearLayout android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="1.0"
+            android:layout_marginBottom="10dp" android:layout_marginTop="10dp">
+            <LinearLayout android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.33">
+
+
+                <TextView android:text="$100" android:layout_gravity="center_horizontal"
+                    android:textSize="14pt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/g_overview_trendTxt"/>
+                <TextView android:layout_gravity="center_horizontal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Trend"/>
+            </LinearLayout>
+            <LinearLayout android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.33">
+
+
+                <TextView android:text="+ $100" android:layout_gravity="center_horizontal"
+                    android:textSize="14pt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/g_overview_trendChangeTxt"/>
+                <TextView android:layout_gravity="center_horizontal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Trend Change"/>
+            </LinearLayout>
+
+            <LinearLayout android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight=".33">
+
+
+                <TextView android:text="$100" android:layout_gravity="center_horizontal"
+                    android:textSize="14pt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/g_overview_projectedSurplus"/>
+                <TextView android:layout_gravity="center_horizontal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Projected Surplus"/>
             </LinearLayout>
         </LinearLayout>
 

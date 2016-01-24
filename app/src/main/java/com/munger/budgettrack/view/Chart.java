@@ -123,7 +123,7 @@ public class Chart extends Fragment
         LineData lineData = new LineData();
 
 
-        generateGoalData(lineData, budget / max, max);
+        generateGoalData(lineData, budget, max);
         generateAverageData(lineData, average, max);
         data.setData(lineData);
         data.setData(generateBarData(cal, max));
@@ -315,11 +315,11 @@ public class Chart extends Fragment
         for (int i = 0; i < sz; i++)
         {
             TransactionCategory cat = transCats.get(i);
-            if (Main.instance.transactionService.totaledCategory.containsKey(cat.category))
+            if (Main.instance.transactionService.totaledCategorySansCatastrophe.containsKey(cat.category))
             {
                 xVals.add(count, cat.category);
 
-                float total = Main.instance.transactionService.totaledCategory.get(cat.category);
+                float total = Main.instance.transactionService.totaledCategorySansCatastrophe.get(cat.category);
                 yVals1.add(new com.github.mikephil.charting.data.Entry(total, count));
 
                 count++;
