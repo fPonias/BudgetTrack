@@ -135,6 +135,10 @@ public class Overview extends Fragment
                 Main.instance.loadExpenditures();
                 return true;
 
+            case R.id.action_categories:
+                Main.instance.loadCategories();
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
 

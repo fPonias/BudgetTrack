@@ -25,6 +25,7 @@ import com.munger.budgettrack.model.Transaction;
 import com.munger.budgettrack.service.CashFlowService;
 import com.munger.budgettrack.service.RemoteStorageService;
 import com.munger.budgettrack.service.TransactionService;
+import com.munger.budgettrack.view.Categories;
 import com.munger.budgettrack.view.Chart;
 import com.munger.budgettrack.view.Entry;
 import com.munger.budgettrack.view.CashFlowBase;
@@ -40,6 +41,11 @@ import com.munger.budgettrack.view.Overview;
  */
 public class Main extends AppCompatActivity
 {
+    public interface SubView
+    {
+        public boolean onBack();
+    }
+
     protected FrameLayout root;
     public ActionBar actionBar;
     protected String currentFrag;
@@ -196,6 +202,8 @@ public class Main extends AppCompatActivity
     public void loadIncome() { loadView(new Income(), "income"); }
 
     public void loadExpenditures() { loadView(new Expenditures(), "expenditures");}
+
+    public void loadCategories() { loadView(new Categories(), "categories");}
 
     @Override
     public boolean onSupportNavigateUp()
