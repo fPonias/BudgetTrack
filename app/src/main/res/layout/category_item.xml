@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal" android:layout_width="match_parent"
-    android:layout_height="40dp" android:weightSum="1">
-    <ImageButton android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:background="@android:drawable/ic_menu_delete" android:layout_gravity="center_vertical"
-        android:id="@+id/g_categories_listitem_deleteBtn" android:layout_marginRight="10dp"/>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical"
+    android:layout_width="match_parent"  android:layout_height="wrap_content"
+    android:id="@+id/g_categories_listitem_editPanel"
+    android:layout_marginLeft="10dp" android:layout_marginRight="10dp">
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent" android:text="Amount"
-        android:id="@+id/g_categories_listitem_nameLbl" android:layout_weight="1" android:layout_marginRight="10dp"
-        android:layout_gravity="center_vertical" android:visibility="gone"/>
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent" android:text="Amount"
-        android:id="@+id/g_categories_listitem_nameEdit" android:layout_weight="1" android:layout_marginRight="10dp"
-        android:layout_gravity="center_vertical"/>
+        android:layout_width="match_parent"
+        android:layout_height="40dp" android:text="Amount"
+        android:id="@+id/g_categories_listitem_nameLbl"
+        android:layout_marginTop="8dp" android:textSize="8pt"/>
+    <LinearLayout
+        android:layout_width="match_parent" android:orientation="horizontal"
+        android:layout_height="40dp">
+        <ImageButton android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:background="@android:drawable/ic_menu_delete" android:layout_gravity="center_vertical"
+            android:id="@+id/g_categories_listitem_deleteBtn"/>
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" android:text="Amount"
+            android:id="@+id/g_categories_listitem_nameEdit"
+            android:layout_gravity="center_vertical"/>
+    </LinearLayout>
 </LinearLayout>

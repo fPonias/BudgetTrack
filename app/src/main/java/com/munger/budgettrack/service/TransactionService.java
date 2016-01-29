@@ -435,7 +435,7 @@ public class TransactionService
     public static int getdow(Calendar cal)
     {
         int dow = ((cal.get(Calendar.DAY_OF_WEEK)) % 7) - 1;
-        if (dow < 1) {dow += 7;}
+        if (dow < 0) {dow += 7;}
 
         return dow;
     }

@@ -129,4 +129,12 @@ public class DBDelta implements Parcelable
 
         return ret;
     }
+
+    public boolean equals(DBDelta item)
+    {
+        if (id != item.id)
+            return false;
+
+        return true;
+    }
 }
