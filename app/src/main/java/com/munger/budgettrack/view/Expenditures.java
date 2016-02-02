@@ -5,6 +5,7 @@ import com.munger.budgettrack.model.CashFlow;
 import com.munger.budgettrack.model.Transaction;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 /**
  * Created by codymunger on 1/1/16.
@@ -41,9 +42,9 @@ public class Expenditures extends CashFlowBase
         Main.instance.loadExpenditureEntry();
     }
 
-    protected ArrayList<CashFlow> getData()
+    protected ArrayList<CashFlow> getData(Calendar cal, int days)
     {
-        return Main.instance.cashFlowService.expenditures;
+        return Main.instance.cashFlowService.getList(true, cal, days);
     }
 
     protected String getAmountText(float amount)
@@ -51,8 +52,9 @@ public class Expenditures extends CashFlowBase
         return "$" + String.valueOf(-amount);
     }
 
-    protected String getTotalText()
+    protected String getTotalText(Calendar cal, int days)
     {
-        return "$" + Main.instance.cashFlowService.expenditureTotal;
+        float total = Main.instance.cashFlowService.getTotal(true, cal, days);
+        return "$" + total;
     }
 }

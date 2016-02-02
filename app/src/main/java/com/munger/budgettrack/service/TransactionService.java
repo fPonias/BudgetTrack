@@ -27,6 +27,7 @@ public class TransactionService
     public HashMap<String, Float> totaledCatastrophe;
     public HashMap<String, Float> totaledCategory;
     public HashMap<String, Float> totaledCategorySansCatastrophe;
+    public HashMap<String, Float> totaledCategoryWithExpenses;
     public HashMap<String, Float> trendingAverages;
     public HashMap<Long, Transaction> indexedTransactions;
 
@@ -46,6 +47,7 @@ public class TransactionService
         sortedCategory = new HashMap<>();
         totaledCategory = new HashMap<>();
         totaledCategorySansCatastrophe = new HashMap<>();
+        totaledCategoryWithExpenses = new HashMap<>();
         trendingAverages = new HashMap<>();
         indexedTransactions = new HashMap<>();
 
@@ -203,6 +205,7 @@ public class TransactionService
         sortedCategory = new HashMap<>();
         totaledCategory = new HashMap<>();
         totaledCategorySansCatastrophe = new HashMap<>();
+        totaledCategoryWithExpenses = new HashMap<>();
         trendingAverages = new HashMap<>();
 
         indexedTransactions = new HashMap<>();
@@ -252,6 +255,7 @@ public class TransactionService
             {
                 totaledCategory.put(category, 0.0f);
                 totaledCategorySansCatastrophe.put(category, 0.0f);
+                totaledCategoryWithExpenses.put(category, 0.0f);
             }
 
             newTotal = totaledCategory.get(category) + t.amount;
@@ -378,9 +382,16 @@ public class TransactionService
         return ret;
     }
 
-    public float getMonthlyBudget()
+    public float getMonthlyBudget(int year, int month)
     {
-        float monthlyBudget = Main.instance.cashFlowService.incomeTotal - Main.instance.cashFlowService.expenditureTotal;
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getDefault());
+        cal.set(year, month, 1);
+        int sz = cal.getMaximum(Calendar.DAY_OF_MONTH);
+
+        float income = Main.instance.cashFlowService.getTotal(false, cal, sz);
+        float expense = Main.instance.cashFlowService.getTotal(true, cal, sz);
+        float monthlyBudget = income - expense;
         monthlyBudget -= Main.instance.settings.emergencyFund;
 
         return monthlyBudget;
@@ -390,7 +401,7 @@ public class TransactionService
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 0);
+        cal.set(year, month, 1);
 
         cal.add(Calendar.MONTH, -1);
         float dailyBudgetLastMonth = getDailyBudget(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH));
@@ -424,9 +435,9 @@ public class TransactionService
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 0);
+        cal.set(year, month, 1);
         int dayCount = cal.getMaximum(Calendar.DAY_OF_MONTH);
-        float monthlyBudget = getMonthlyBudget();
+        float monthlyBudget = getMonthlyBudget(year, month);
         float dailyBudget = monthlyBudget / dayCount;
 
         return dailyBudget;

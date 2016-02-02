@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
 import android.os.Environment;
@@ -108,7 +109,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
     }
 
     // If you change the database schema, you must increment the database version.
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 3;
     public static final String DATABASE_NAME = "Transaction.db";
 
     public static HashMap<String, Parcelable.Creator> typeList;
@@ -268,7 +269,20 @@ public class DatabaseHelper extends SQLiteOpenHelper
 
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
     {
-
+        if (oldVersion < 2)
+        {
+            try
+            {
+                db.execSQL("ALTER TABLE " + CashFlow.TABLE_NAME + " ADD COLUMN categoryId INTEGER");
+                db.execSQL("CREATE INDEX cashFlowCategoryIdIdx ON " + CashFlow.TABLE_NAME + "(categoryId)");
+            }
+            catch(SQLiteException e)
+            {}
+        }
+        if (oldVersion < 3)
+        {
+            db.execSQL("UPDATE TABLE " + CashFlow.TABLE_NAME + " SET startDate=0, endDate=" + Long.MAX_VALUE);
+        }
     }
 
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion)

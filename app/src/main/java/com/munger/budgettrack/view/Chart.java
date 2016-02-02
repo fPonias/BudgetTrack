@@ -33,6 +33,7 @@ import com.munger.budgettrack.service.TransactionService;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.TimeZone;
 
 public class Chart extends Fragment
@@ -40,6 +41,7 @@ public class Chart extends Fragment
     public CombinedChart chartMonthly;
     public CombinedChart chartWeekly;
     public PieChart chartSummary;
+    public PieChart chartTotalSummary;
 
     public Chart()
     {
@@ -73,14 +75,18 @@ public class Chart extends Fragment
         populateWeekly();
 
         chartSummary = (PieChart) ret.findViewById(R.id.g_chart_spendingPie);
-        populatePie();
+        populatePie(chartSummary, false);
+
+        chartTotalSummary = (PieChart) ret.findViewById(R.id.g_chart_totalSpendingPie);
+        populatePie(chartTotalSummary, true);
+
 
         return ret;
     }
 
     private void populateMonthly()
     {
-        chartMonthly.setDescription("Monthly Summary");
+        chartMonthly.setDescription("");
         chartMonthly.setBackgroundColor(Color.WHITE);
         chartMonthly.setDrawGridBackground(false);
         chartMonthly.setDrawBarShadow(false);
@@ -125,6 +131,7 @@ public class Chart extends Fragment
 
         generateGoalData(lineData, budget, max);
         generateAverageData(lineData, average, max);
+        generateTrendData(lineData, cal, max);
         data.setData(lineData);
         data.setData(generateBarData(cal, max));
 
@@ -136,7 +143,7 @@ public class Chart extends Fragment
 
     private void populateWeekly()
     {
-        chartWeekly.setDescription("Weekly Summary");
+        chartWeekly.setDescription("");
         chartMonthly.setBackgroundColor(Color.WHITE);
         chartMonthly.setDrawGridBackground(false);
         chartMonthly.setDrawBarShadow(false);
@@ -183,6 +190,7 @@ public class Chart extends Fragment
 
         generateGoalData(lineData, budget / max, max);
         generateAverageData(lineData, average, max);
+        generateTrendData(lineData, cal, max);
         data.setData(lineData);
         data.setData(generateBarData(cal, max));
 
@@ -198,8 +206,48 @@ public class Chart extends Fragment
         entries.add(new com.github.mikephil.charting.data.Entry(budget, max));
 
         LineDataSet set = new LineDataSet(entries, "budget goal");
-        set.setColor(Color.rgb(240, 238, 70));
+        set.setColor(Color.rgb(240, 70, 70));
         set.setLineWidth(2.5f);
+        set.setCircleSize(0);
+        set.setDrawCubic(true);
+        set.setDrawValues(false);
+
+        set.setAxisDependency(YAxis.AxisDependency.LEFT);
+
+        d.addDataSet(set);
+    }
+
+    private void generateTrendData(LineData d, Calendar cal, int max)
+    {
+        Calendar today = Calendar.getInstance();
+        today.setTimeInMillis(System.currentTimeMillis());
+
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(cal.getTimeInMillis());
+        ArrayList<com.github.mikephil.charting.data.Entry> entries = new ArrayList<>();
+
+        int year, month, day;
+        float trend;
+        ArrayList<Transaction> vals;
+
+        for (int i = 0; i < max; i++)
+        {
+            year = c.get(Calendar.YEAR);
+            month = c.get(Calendar.MONTH);
+            day = c.get(Calendar.DAY_OF_MONTH);
+            trend = Main.instance.transactionService.getTrend(year, month, day);
+
+            entries.add(new com.github.mikephil.charting.data.Entry(trend, i));
+
+            c.add(Calendar.DAY_OF_MONTH, 1);
+
+            if (c.after(today))
+                break;
+        }
+
+        LineDataSet set = new LineDataSet(entries, "trend");
+        set.setColor(Color.rgb(100, 100, 100));
+        set.setLineWidth(1.5f);
         set.setCircleSize(0);
         set.setDrawCubic(true);
         set.setDrawValues(false);
@@ -217,7 +265,7 @@ public class Chart extends Fragment
         entries.add(new com.github.mikephil.charting.data.Entry(average, max));
 
         LineDataSet set = new LineDataSet(entries, "average expenses");
-        set.setColor(Color.rgb(240, 0, 70));
+        set.setColor(Color.rgb(240, 240, 70));
         set.setLineWidth(2.5f);
         set.setCircleSize(0);
         set.setDrawCubic(true);
@@ -243,9 +291,15 @@ public class Chart extends Fragment
             {
                 ArrayList<Transaction> vals = Main.instance.transactionService.sortedTransactions.get(key);
                 int sz = vals.size();
-                float[] list = new float[sz];
+
+                //float[] list = new float[sz];
+                float[] list = new float[1];
+
+                list[0] = 0;
                 for (int j = 0; j < sz; j++)
-                    list[j] = vals.get(j).amount;
+                    list[0] = list[0] + vals.get(j).amount;
+                //    list[j] = vals.get(j).amount;
+
 
                 entries.add(new BarEntry(list, i));
             }
@@ -264,44 +318,50 @@ public class Chart extends Fragment
         return d;
     }
 
-    private void populatePie()
+    private void populatePie(PieChart chart, boolean includeExpenses)
     {
-        chartSummary.setUsePercentValues(true);
-        chartSummary.setDescription("");
-        chartSummary.setExtraOffsets(5, 10, 5, 5);
+        chart.setUsePercentValues(true);
+        chart.setDescription("");
 
-        chartSummary.setDragDecelerationFrictionCoef(0.95f);
+        chart.setDragDecelerationFrictionCoef(0.95f);
 
-        chartSummary.setDrawHoleEnabled(true);
-        chartSummary.setHoleColorTransparent(true);
+        chart.setDrawHoleEnabled(false);
+        chart.setHoleColorTransparent(true);
 
-        chartSummary.setTransparentCircleColor(Color.WHITE);
-        chartSummary.setTransparentCircleAlpha(110);
+        //chart.setTransparentCircleColor(Color.WHITE);
+        //chart.setTransparentCircleAlpha(110);
 
-        chartSummary.setHoleRadius(58f);
-        chartSummary.setTransparentCircleRadius(61f);
+        //chart.setHoleRadius(58f);
+        //chart.setTransparentCircleRadius(61f);
 
-        chartSummary.setDrawCenterText(true);
+        chart.setDrawCenterText(true);
 
-        chartSummary.setRotationAngle(0);
-        chartSummary.setHighlightPerTapEnabled(true);
+        chart.setRotationAngle(0);
+        chart.setRotationEnabled(false);
+        chart.setHighlightPerTapEnabled(true);
 
-        setPieData();
+        setPieData(chart, includeExpenses);
 
-        chartSummary.animateY(1400, Easing.EasingOption.EaseInOutQuad);
+        chart.animateY(1400, Easing.EasingOption.EaseInOutQuad);
         // chartSummary.spin(2000, 0, 360);
 
-        Legend l = chartSummary.getLegend();
-        l.setPosition(Legend.LegendPosition.RIGHT_OF_CHART);
-        l.setXEntrySpace(7f);
+        Legend l = chart.getLegend();
+        l.setPosition(Legend.LegendPosition.BELOW_CHART_CENTER);
+        l.setXEntrySpace(10f);
         l.setYEntrySpace(0f);
         l.setYOffset(0f);
     }
 
-    private void setPieData()
+    private void setPieData(PieChart chart, boolean includeExpenses)
     {
         ArrayList<com.github.mikephil.charting.data.Entry> yVals1 = new ArrayList<com.github.mikephil.charting.data.Entry>();
         ArrayList<String> xVals = new ArrayList<String>();
+        HashMap<String, Float> dataSource;
+
+        if (includeExpenses)
+            dataSource = Main.instance.transactionService.totaledCategory;
+        else
+            dataSource = Main.instance.transactionService.totaledCategorySansCatastrophe;
 
         // IMPORTANT: In a PieChart, no values (Entry) should have the same
         // xIndex (even if from different DataSets), since no values can be
@@ -315,18 +375,18 @@ public class Chart extends Fragment
         for (int i = 0; i < sz; i++)
         {
             TransactionCategory cat = transCats.get(i);
-            if (Main.instance.transactionService.totaledCategorySansCatastrophe.containsKey(cat.category))
+            if (dataSource.containsKey(cat.category))
             {
                 xVals.add(count, cat.category);
 
-                float total = Main.instance.transactionService.totaledCategorySansCatastrophe.get(cat.category);
+                float total = dataSource.get(cat.category);
                 yVals1.add(new com.github.mikephil.charting.data.Entry(total, count));
 
                 count++;
             }
         }
 
-        PieDataSet dataSet = new PieDataSet(yVals1, "spending summary");
+        PieDataSet dataSet = new PieDataSet(yVals1, "");
         dataSet.setSliceSpace(2f);
         dataSet.setSelectionShift(5f);
 
@@ -355,13 +415,13 @@ public class Chart extends Fragment
 
         PieData data = new PieData(xVals, dataSet);
         data.setValueFormatter(new PercentFormatter());
-        data.setValueTextSize(11f);
+        data.setValueTextSize(8f);
         data.setValueTextColor(Color.BLACK);
-        chartSummary.setData(data);
+        chart.setData(data);
 
         // undo all highlights
-        chartSummary.highlightValues(null);
+        chart.highlightValues(null);
 
-        chartSummary.invalidate();
+        chart.invalidate();
     }
 }

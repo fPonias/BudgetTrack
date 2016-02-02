@@ -15,7 +15,8 @@ public class ExpenditureEntry extends CashFlowEntryBase
 
     protected void constructCashFlow(CashFlow ret)
     {
-        ret.startDate = System.currentTimeMillis();
+        
+        ret.startDate = ;
         ret.endDate = 0;
         ret.desc = descTxt.getText().toString();
         ret.amount = getAmount();

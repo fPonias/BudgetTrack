@@ -9,11 +9,16 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 
 import com.munger.budgettrack.Main;
 import com.munger.budgettrack.R;
 import com.munger.budgettrack.model.CashFlow;
+import com.munger.budgettrack.model.TransactionCategory;
+
+import java.util.ArrayList;
 
 /**
  * Created by codymunger on 1/1/16.
@@ -22,6 +27,9 @@ public abstract class CashFlowEntryBase extends Fragment
 {
     public EditText descTxt;
     public EditText amountTxt;
+    public EditText startTxt;
+    public EditText endTxt;
+    public Spinner categorySpn;
 
     private CashFlow data;
 
@@ -50,8 +58,17 @@ public abstract class CashFlowEntryBase extends Fragment
     {
         View ret = inflater.inflate(R.layout.fragment_incomeentry, container, false);
         descTxt = (EditText) ret.findViewById(R.id.g_incomeentry_descInput);
+
+        startTxt = (EditText) ret.findViewById(R.id.g_incomeentry_startDateInput);
+        endTxt = (EditText) ret.findViewById(R.id.g_incomeentry_endDateInput);
         amountTxt = (EditText) ret.findViewById(R.id.g_incomeentry_amountInput);
         amountTxt.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED);
+
+        categorySpn = (Spinner) ret.findViewById(R.id.g_incomeentry_categorySpinner);
+        ArrayList<TransactionCategory> transCats = Main.instance.dbHelper.loadTransactionCategories();
+        ArrayAdapter<TransactionCategory> arrad = new ArrayAdapter<TransactionCategory>(Main.instance, android.R.layout.simple_list_item_1, transCats);
+        categorySpn.setAdapter(arrad);
+
 
         Bundle b = getArguments();
         if (b != null && b.containsKey("data"))

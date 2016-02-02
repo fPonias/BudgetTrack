@@ -199,32 +199,6 @@ public class Categories extends Fragment implements Main.SubView
 
     public void deleteClicked(CategoryEntryStruct str)
     {
-        if (str.data.id > -1)
-        {
-            final TransactionCategory tr = str.data;
-            AlertDialog.Builder builder = new AlertDialog.Builder(Main.instance);
-
-            builder.setMessage(getDeleteMessage(tr));
-            builder.setTitle(getDeleteTitle());
-
-            builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    Main.instance.cashFlowService.deleteCashFlow(tr);
-                }
-            });
-            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                }
-            });
-
-            AlertDialog dialog = builder.create();
-            dialog.show();
-        }
-
-        data.remove(str.data);
-        categoryList.invalidate();
-
-
     }
 
 
