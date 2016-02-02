@@ -13,11 +13,13 @@ import android.os.Parcelable;
 
 import com.munger.budgettrack.Main;
 
+import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -323,11 +325,8 @@ public class DatabaseHelper extends SQLiteOpenHelper
         return changeLog;
     }
 
-    public ArrayList<TransactionCategory> loadTransactionCategories()
+    public ArrayList<TransactionCategory> reloadTransactionCategories()
     {
-        if (transactionCategories != null)
-            return transactionCategories;
-
         transactionCategories = new ArrayList<>();
 
         Cursor cur = database.query(TransactionCategory.TABLE_NAME, new String[]{"category", "id"},
@@ -349,18 +348,109 @@ public class DatabaseHelper extends SQLiteOpenHelper
         return transactionCategories;
     }
 
+    public ArrayList<TransactionCategory> loadTransactionCategories()
+    {
+        if (transactionCategories != null)
+            return transactionCategories;
+
+        reloadTransactionCategories();
+
+        return transactionCategories;
+    }
+
     public void syncData()
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(System.currentTimeMillis());
+        ArrayList<DBDelta> remoteList = null;
 
         try
         {
-            ArrayList<DBDelta> remoteList = Main.instance.remoteStorageService.getRemoteChangelog(cal);
+            remoteList = Main.instance.remoteStorageService.getRemoteChangelog(cal);
+
         }
         catch(IOException e){
             System.console().printf("failed to load remote changelog");
+            return;
         }
+
+        int startIdx = 0;
+        int rsz = remoteList.size();
+        int lsz = changeLog.size();
+        int i = 0;
+        while (i < lsz && i < rsz)
+        {
+            DBDelta ritem = remoteList.get(i);
+            DBDelta litem = changeLog.get(i);
+
+            if (!ritem.equals(litem))
+                break;
+
+            i++;
+        }
+
+        boolean uploadChanges = false;
+        if (i == lsz && i == rsz)
+        {
+            return;
+        }
+        else if (i == lsz)
+        {
+            mergeAndExecuteChangeLists(changeLog, remoteList);
+        }
+        else if (i == rsz)
+        {
+            mergeAndExecuteChangeLists(changeLog, remoteList);
+            uploadChanges = true;
+        }
+        else
+        {
+            DBDeltaConflict conflicts = getConflicts(changeLog, remoteList);
+            mergeAndExecuteChangeLists(changeLog, remoteList);
+            resolveConflicts(conflicts);
+            uploadChanges = true;
+        }
+
+        if (uploadChanges)
+        {/*
+            try
+            {
+                Main.instance.remoteStorageService.overwriteRemoteChangeLog(cal, changeLog);
+            }
+            catch(IOException e){
+                System.console().printf("failed to upload new database changes with error " + e.getMessage());
+                syncData();
+            }*/
+        }
+    }
+
+    private static class DBDeltaConflict
+    {
+        public ArrayList<DBDelta> localChange;
+        public ArrayList<DBDelta> remoteChange;
+
+        public DBDeltaConflict()
+        {
+            localChange = new ArrayList<>();
+            remoteChange = new ArrayList<>();
+        }
+    }
+
+    private DBDeltaConflict getConflicts(ArrayList<DBDelta> localList , ArrayList<DBDelta> remoteList)
+    {
+        DBDeltaConflict ret = new DBDeltaConflict();
+        return ret;
+    }
+
+    private void mergeAndExecuteChangeLists(ArrayList<DBDelta> localList , ArrayList<DBDelta> remoteList)
+    {
+
+    }
+
+    private HashMap<String, Long> resolvedToDate = new HashMap<>();
+
+    private void resolveConflicts(DBDeltaConflict conflicts)
+    {
     }
 
     public static byte[] marshall(Parcelable parceable) {

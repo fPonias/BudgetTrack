@@ -5,7 +5,6 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -14,10 +13,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.drive.Drive;
 import com.munger.budgettrack.model.CashFlow;
 import com.munger.budgettrack.model.DatabaseHelper;
 import com.munger.budgettrack.model.Settings;
@@ -28,7 +23,6 @@ import com.munger.budgettrack.service.TransactionService;
 import com.munger.budgettrack.view.Categories;
 import com.munger.budgettrack.view.Chart;
 import com.munger.budgettrack.view.Entry;
-import com.munger.budgettrack.view.CashFlowBase;
 import com.munger.budgettrack.view.ExpenditureEntry;
 import com.munger.budgettrack.view.Expenditures;
 import com.munger.budgettrack.view.Income;
@@ -43,12 +37,12 @@ public class Main extends AppCompatActivity
 {
     public interface SubView
     {
-        public boolean onBack();
+        boolean onBack();
     }
 
     protected FrameLayout root;
     public ActionBar actionBar;
-    protected String currentFrag;
+    protected String currentFragName;
 
     public DatabaseHelper dbHelper;
     public Settings settings;
@@ -80,7 +74,7 @@ public class Main extends AppCompatActivity
             cashFlowService = new CashFlowService(savedInstanceState.getBundle("cashFlowService"));
             remoteStorageService = new RemoteStorageService(this);
 
-            currentFrag = savedInstanceState.getString("currentFragment");
+            currentFragName = savedInstanceState.getString("currentFragment");
 
             FragmentManager fm = getFragmentManager();
 
@@ -121,7 +115,7 @@ public class Main extends AppCompatActivity
         savedInstanceState.putParcelable("dbHelper", dbHelper.getState());
         savedInstanceState.putParcelable("transactionService", transactionService.getState());
         savedInstanceState.putParcelable("cashFlowService", cashFlowService.getState());
-        savedInstanceState.putString("currentFragment", currentFrag);
+        savedInstanceState.putString("currentFragment", currentFragName);
     }
 
     public final static int RESOLVE_CONNECTION_REQUEST_CODE = 12;
@@ -230,12 +224,33 @@ public class Main extends AppCompatActivity
         if (sz == 1)
             return false;
 
+        Fragment currentFrag = fm.findFragmentByTag(currentFragName);
+        if (currentFrag instanceof SubView)
+        {
+            SubView sv = (SubView) currentFrag;
+            if (sv.onBack() == false)
+                return false;
+            else
+                return goBack2();
+        }
+        else
+        {
+            return goBack2();
+
+        }
+    }
+
+    protected boolean goBack2()
+    {
+        FragmentManager fm = getFragmentManager();
+        int sz = fm.getBackStackEntryCount();
+
         FragmentManager.BackStackEntry bse = fm.getBackStackEntryAt(sz - 2);
         String id = bse.getName();
         fm.popBackStack();
         sz--;
 
-        currentFrag = id;
+        currentFragName = id;
 
         if (sz == 1)
             actionBar.setDisplayHomeAsUpEnabled(false);
@@ -256,13 +271,13 @@ public class Main extends AppCompatActivity
         if (fm.getBackStackEntryCount() > 0)
         {
             actionBar.setDisplayHomeAsUpEnabled(true);
-            Fragment fragment = fm.findFragmentByTag(currentFrag);
+            Fragment fragment = fm.findFragmentByTag(currentFragName);
 
             if (fragment != null)
                 ft.remove(fragment);
         }
 
-        currentFrag = id;
+        currentFragName = id;
         ft.add(R.id.appId, frag, id);
         ft.addToBackStack(id);
         ft.commit();
