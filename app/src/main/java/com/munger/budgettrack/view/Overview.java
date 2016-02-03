@@ -207,7 +207,7 @@ public class Overview extends Fragment
         float cataaverate = cataTotal / dayCount;
 
 
-        float monthlyBudget = Main.instance.transactionService.getMonthlyBudget();
+        float monthlyBudget = Main.instance.transactionService.getMonthlyBudget(year, month);
         float monthlyBudgetGoal = (float) (monthlyBudget / (double) dayCount);
         float remainingBudgetMonth = monthlyBudget - monthTotal;
 

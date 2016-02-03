@@ -36,6 +36,7 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     public float amount;
     public long startDate;
     public long endDate;
+    public long categoryId;
 
     public CashFlow()
     {
@@ -44,6 +45,7 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
         endDate = 0;
         desc = "";
         amount = 0.0f;
+        categoryId = 0;
     }
 
     public CashFlow(Parcel p)
@@ -53,6 +55,7 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
         endDate = p.readLong();
         desc = p.readString();
         amount = p.readFloat();
+        categoryId = p.readLong();
     }
 
     @Override
@@ -69,6 +72,7 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
         dest.writeLong(endDate);
         dest.writeString(desc);
         dest.writeFloat(amount);
+        dest.writeLong(categoryId);
     }
 
     public ContentValues getContentValues()
@@ -78,6 +82,7 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
         values.put("endDate", Transaction.dateToKey(endDate));
         values.put("amount", amount);
         values.put("desc", desc);
+        values.put("categoryId", categoryId);
 
         if (id == -1)
             id = DatabaseHelper.getUniqueID();
@@ -111,7 +116,8 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
                 "startDate TEXT," +
                 "endDate TEXT," +
                 "desc TEXT," +
-                "amount FLOAT" +
+                "amount FLOAT," +
+                "categoryId INTEGER" +
                 ")";
 
         return ret;
@@ -121,7 +127,8 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     {
         String[] ret = {
                 "CREATE INDEX cashFlowStartDateIdx ON " + TABLE_NAME + " (startDate)",
-                "CREATE INDEX cashFlowEndDateIdx ON " + TABLE_NAME + "(endDate)"
+                "CREATE INDEX cashFlowEndDateIdx ON " + TABLE_NAME + "(endDate)",
+                "CREATE INDEX cashFlowCategoryIdIdx ON " + TABLE_NAME + "(categoryId)"
         };
 
         return ret;

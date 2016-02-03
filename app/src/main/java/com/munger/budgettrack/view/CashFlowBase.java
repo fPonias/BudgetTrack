@@ -23,6 +23,7 @@ import com.munger.budgettrack.model.Transaction;
 import com.munger.budgettrack.service.CashFlowService;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 
 /**
@@ -108,6 +109,7 @@ public abstract class CashFlowBase extends Fragment
     public TextView total;
     public ArrayList<CashFlow> data;
     public IncomeAdapter adapter;
+    public Calendar startCal;
 
     private HashMap<Long, IncomeViewStruct> viewIndex;
     private CashFlowService.CashFlowChangedListener changeListener;
@@ -118,7 +120,8 @@ public abstract class CashFlowBase extends Fragment
 
         changeListener = new CashFlowService.CashFlowChangedListener(){public void changed()
         {
-            update();
+            int days = startCal.getMaximum(Calendar.DAY_OF_MONTH);
+            update(startCal, days);
         }};
 
         Main.instance.cashFlowService.addListener(changeListener);
@@ -140,7 +143,10 @@ public abstract class CashFlowBase extends Fragment
         title = (TextView) ret.findViewById(R.id.g_income_title);
         total = (TextView) ret.findViewById(R.id.g_income_total);
 
-        update();
+        startCal = Calendar.getInstance();
+        startCal.setTimeInMillis(System.currentTimeMillis());
+        int days = startCal.getMaximum(Calendar.DAY_OF_MONTH);
+        update(startCal, days);
 
 
         return ret;
@@ -236,21 +242,21 @@ public abstract class CashFlowBase extends Fragment
     protected abstract String getDeleteMessage(CashFlow tr);
     protected abstract void itemClicked(IncomeViewStruct adapter);
     protected abstract void addSelected();
-    protected abstract ArrayList<CashFlow> getData();
+    protected abstract ArrayList<CashFlow> getData(Calendar cal, int days);
     protected abstract String getAmountText(float amount);
-    protected abstract String getTotalText();
+    protected abstract String getTotalText(Calendar cal, int days);
 
-    public void update()
+    public void update(Calendar cal, int days)
     {
         title.setText(getTitle());
-        data = getData();
+        data = getData(cal, days);
         if (data != null && list != null)
         {
             adapter = new IncomeAdapter(this, data);
             list.setAdapter(adapter);
         }
 
-        total.setText(getTotalText());
+        total.setText(getTotalText(cal, days));
     }
 
     public void indexView(CashFlow tr, IncomeViewStruct v)

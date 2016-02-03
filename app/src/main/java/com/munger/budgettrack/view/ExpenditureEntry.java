@@ -1,7 +1,13 @@
 package com.munger.budgettrack.view;
 
+import android.text.Editable;
+import android.widget.EditText;
+
 import com.munger.budgettrack.model.CashFlow;
 import com.munger.budgettrack.model.Transaction;
+
+import java.util.Calendar;
+import java.util.TimeZone;
 
 /**
  * Created by codymunger on 1/1/16.
@@ -15,8 +21,8 @@ public class ExpenditureEntry extends CashFlowEntryBase
 
     protected void constructCashFlow(CashFlow ret)
     {
-        ret.startDate = System.currentTimeMillis();
-        ret.endDate = 0;
+        ret.startDate = getDate(startTxt, 0);
+        ret.endDate = getDate(endTxt, Long.MAX_VALUE);
         ret.desc = descTxt.getText().toString();
         ret.amount = getAmount();
         ret.amount = -ret.amount;
