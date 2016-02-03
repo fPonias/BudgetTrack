@@ -7,6 +7,7 @@ import android.os.Parcelable;
 
 import com.munger.budgettrack.Main;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;

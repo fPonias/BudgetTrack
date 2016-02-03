@@ -3,6 +3,7 @@ package com.munger.budgettrack.service;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.os.Environment;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -27,9 +28,13 @@ import com.munger.budgettrack.Main;
 import com.munger.budgettrack.model.DBDelta;
 
 import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -150,19 +155,23 @@ public class RemoteStorageService implements GoogleApiClient.ConnectionCallbacks
         DriveContents contents = result2.getDriveContents();
         ObjectOutputStream ostr = new ObjectOutputStream(contents.getOutputStream());
 
-        for (DBDelta item : list)
-        {
-            ostr.writeObject(item);
-        }
+        //for (DBDelta item : list)
+        //{
+        //    ostr.writeObject(item);
+        //}
 
-        ostr.flush();;
-        ostr.close();
+        ostr.writeChars("Hello world!");
 
-        ExecutionOptions options = (new ExecutionOptions.Builder())
-                .setConflictStrategy(ExecutionOptions.CONFLICT_STRATEGY_KEEP_REMOTE)
-                .build();
+        ostr.flush();
+
+        ExecutionOptions.Builder builder = (new ExecutionOptions.Builder());
+        builder.setConflictStrategy(ExecutionOptions.CONFLICT_STRATEGY_KEEP_REMOTE);
+        builder.setNotifyOnCompletion(true);
+        ExecutionOptions options = builder.build();
+
         PendingResult<Status> presult3 = contents.commit(googleClient, null, options);
         Status result3 = presult3.await();
+        ostr.close();
 
         if (!result3.isSuccess())
             throw new IOException("remote file was updated after the last read");

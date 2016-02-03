@@ -313,10 +313,10 @@ public class TransactionService
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 0);
+        cal.set(year, month, 1);
         float total = 0;
 
-        int max = cal.getMaximum(Calendar.DAY_OF_MONTH);
+        int max = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
         for (int i = 0; i < max; i++)
         {
             long date = cal.getTimeInMillis();
@@ -338,10 +338,10 @@ public class TransactionService
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 0);
+        cal.set(year, month, 1);
         float total = 0;
 
-        int max = cal.getMaximum(Calendar.DAY_OF_MONTH);
+        int max = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
         for (int i = 0; i < max; i++)
         {
             long date = cal.getTimeInMillis();
@@ -390,7 +390,7 @@ public class TransactionService
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 0);
+        cal.set(year, month, 1);
 
         cal.add(Calendar.MONTH, -1);
         float dailyBudgetLastMonth = getDailyBudget(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH));
@@ -424,8 +424,8 @@ public class TransactionService
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 0);
-        int dayCount = cal.getMaximum(Calendar.DAY_OF_MONTH);
+        cal.set(year, month, 1);
+        int dayCount = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
         float monthlyBudget = getMonthlyBudget();
         float dailyBudget = monthlyBudget / dayCount;
 

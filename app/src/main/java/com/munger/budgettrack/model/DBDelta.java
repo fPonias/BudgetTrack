@@ -6,10 +6,12 @@ import android.os.Parcelable;
 
 import com.munger.budgettrack.Main;
 
+import java.io.Serializable;
+
 /**
  * Created by codymunger on 1/12/16.
  */
-public class DBDelta implements Parcelable
+public class DBDelta implements Parcelable, Serializable
 {
     public static final Parcelable.Creator<DBDelta> CREATOR = new Parcelable.Creator<DBDelta>()
     {

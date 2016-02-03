@@ -106,7 +106,7 @@ public class Chart extends Fragment
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
         cal.set(year, month, 1);
-        int max = cal.getMaximum(Calendar.DAY_OF_MONTH);
+        int max = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
         float budget = Main.instance.transactionService.getDailyBudget(year, month);
         float total = Main.instance.transactionService.getMonthlyTotal(year, month);
         float average = total / (day + 1);

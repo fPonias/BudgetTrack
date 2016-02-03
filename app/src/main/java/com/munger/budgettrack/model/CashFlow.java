@@ -7,6 +7,7 @@ import android.provider.ContactsContract;
 
 import com.munger.budgettrack.Main;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 

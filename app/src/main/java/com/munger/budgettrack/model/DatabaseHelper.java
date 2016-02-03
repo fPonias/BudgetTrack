@@ -18,6 +18,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ import java.util.Map;
  */
 public class DatabaseHelper extends SQLiteOpenHelper
 {
-    public static interface DatabaseProxyParcelable extends Parcelable
+    public static interface DatabaseProxyParcelable extends Parcelable, Serializable
     {
         public ContentValues getContentValues();
     }
@@ -397,8 +398,8 @@ public class DatabaseHelper extends SQLiteOpenHelper
             uploadChanges = true;
         }
 
-        if (uploadChanges)
-        {/*
+        /*if (uploadChanges)
+        {
             try
             {
                 Main.instance.remoteStorageService.overwriteRemoteChangeLog(cal, changeLog);
@@ -406,8 +407,8 @@ public class DatabaseHelper extends SQLiteOpenHelper
             catch(IOException e){
                 System.console().printf("failed to upload new database changes with error " + e.getMessage());
                 syncData();
-            }*/
-        }
+            }
+        }*/
     }
 
     private static class DBDeltaConflict

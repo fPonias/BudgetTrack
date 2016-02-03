@@ -6,6 +6,8 @@ import android.os.Parcelable;
 
 import com.munger.budgettrack.Main;
 
+import java.io.Serializable;
+
 /**
  * Created by codymunger on 12/28/15.
  */

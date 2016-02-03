@@ -198,7 +198,7 @@ public class Overview extends Fragment
         Main.instance.transactionService.loadTransactions(year, month);
         Main.instance.cashFlowService.loadData();
 
-        int dayCount = cal.getMaximum(Calendar.DAY_OF_MONTH);
+        int dayCount = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
         float monthTotal = Main.instance.transactionService.getMonthlyTotal(year, month);
         float monthaverage = monthTotal / (day + 1.0f);
 
