@@ -121,8 +121,10 @@ public class CashFlowService
         {
             CashFlow t = new CashFlow();
             t.id = cur.getLong(5);
-            t.startDate = cur.getLong(0);
-            t.endDate = cur.getLong(1);
+            String key = cur.getString(0);
+            t.startDate = Transaction.keyToDate(key).getTimeInMillis();
+            key = cur.getString(1);
+            t.endDate = Transaction.keyToDate(key).getTimeInMillis();
             t.amount = cur.getFloat(2);
             t.desc = cur.getString(3);
             t.categoryId = cur.getLong(4);

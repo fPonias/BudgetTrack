@@ -183,11 +183,37 @@ public class Transaction implements DatabaseHelper.DatabaseProxyParcelable
 
         ret.setTimeZone(TimeZone.getDefault());
 
-        String year = key.substring(0, 4);
-        String month = key.substring(4, 6);
-        String day = key.substring(6);
+        if (key.length() == 8)
+        {
+            String year = key.substring(0, 4);
+            String month = key.substring(4, 6);
+            String day = key.substring(6);
 
-        ret.set(Integer.parseInt(year), Integer.parseInt(month) - 1, Integer.parseInt(day), 12, 0);
+            ret.set(Integer.parseInt(year), Integer.parseInt(month) - 1, Integer.parseInt(day), 12, 0);
+        }
+        else if (key.length() == 6)
+        {
+            String year = key.substring(0, 2);
+            int yr = Integer.parseInt(year);
+            if (yr < 69)
+                yr += 2000;
+            else
+                yr += 1900;
+
+            String month = key.substring(2, 4);
+            String day = key.substring(4);
+
+            ret.set(yr, Integer.parseInt(month) - 1, Integer.parseInt(day), 12, 0);
+        }
+        else if (key.length() > 8)
+        {
+            ret.setTimeInMillis(Long.MAX_VALUE);
+        }
+        else
+        {
+            ret.setTimeInMillis(0);
+        }
+
         return ret;
     }
 
