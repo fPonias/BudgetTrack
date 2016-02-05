@@ -3,6 +3,7 @@ package com.munger.budgettrack.view;
 import com.munger.budgettrack.Main;
 import com.munger.budgettrack.model.CashFlow;
 import com.munger.budgettrack.model.Transaction;
+import com.munger.budgettrack.service.CashFlowService;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -44,7 +45,7 @@ public class Expenditures extends CashFlowBase
 
     protected ArrayList<CashFlow> getData(Calendar cal, int days)
     {
-        return Main.instance.cashFlowService.getList(true, cal, days);
+        return Main.instance.cashFlowService.getList(CashFlowService.Type.EXPENDITURE, cal, days);
     }
 
     protected String getAmountText(float amount)
@@ -54,7 +55,7 @@ public class Expenditures extends CashFlowBase
 
     protected String getTotalText(Calendar cal, int days)
     {
-        float total = Main.instance.cashFlowService.getTotal(true, cal, days);
+        float total = Main.instance.cashFlowService.getTotal(CashFlowService.Type.EXPENDITURE, cal, days);
         return "$" + total;
     }
 }

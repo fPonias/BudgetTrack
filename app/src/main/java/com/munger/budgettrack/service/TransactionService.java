@@ -389,8 +389,8 @@ public class TransactionService
         cal.set(year, month, 1);
         int sz = cal.getMaximum(Calendar.DAY_OF_MONTH);
 
-        float income = Main.instance.cashFlowService.getTotal(false, cal, sz);
-        float expense = Main.instance.cashFlowService.getTotal(true, cal, sz);
+        float income = Main.instance.cashFlowService.getTotal(CashFlowService.Type.INCOME, cal, sz);
+        float expense = Main.instance.cashFlowService.getTotal(CashFlowService.Type.EXPENDITURE, cal, sz);
         float monthlyBudget = income - expense;
         monthlyBudget -= Main.instance.settings.emergencyFund;
 

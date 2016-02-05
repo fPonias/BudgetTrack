@@ -11,6 +11,8 @@ public class BTree<T extends BTree.TreeComparer>
     {
         public abstract int compareTo(TreeComparer o);
         public abstract long valueOf();
+        public abstract boolean isMin();
+        public abstract boolean isMax();
     }
 
     public T item;
@@ -175,45 +177,49 @@ public class BTree<T extends BTree.TreeComparer>
 
     }
 
-    public ArrayList<T> getOrderedList(T target, boolean lessThan)
+    public ArrayList<T> getOrderedList(T target, CompareOperator op)
     {
         ArrayList<T> ret = new ArrayList<>();
-
-        BTree<T> closest = this.find(target, true);
-
-        if (closest != null)
-        {
-            if (lessThan && closest.left != null)
-                closest.left.appendChildren(ret);
-
-            if (closest.item != null)
-            {
-                int value = closest.item.compareTo(target);
-                long oVal = closest.item.valueOf();
-
-                if (value == 0 || (!lessThan && oVal == 0) || (lessThan && oVal == Long.MAX_VALUE))
-                {
-                    for(T i : closest.items)
-                        ret.add(i);
-                }
-            }
-
-            if (!lessThan && closest.right != null)
-                closest.right.appendChildren(ret);
-        }
-
+        getOrderedList(target, op, ret);
         return ret;
     }
 
-    private void appendChildren(ArrayList<T> ret)
+    public enum CompareOperator
     {
-        if (left != null)
-            left.appendChildren(ret);
+        LESS_THAN,
+        GREATER_THAN
+    };
 
-        for(T i : items)
-            ret.add(i);
+    private void getOrderedList(T target, CompareOperator op, ArrayList<T> ret)
+    {
+        int cmp = this.item.compareTo(target);
+        if (op == CompareOperator.LESS_THAN)
+        {
+            if (left != null)
+                left.getOrderedList(target, op, ret);
 
-        if (right != null)
-            right.appendChildren(ret);
+            if (cmp <= 0 || target.isMax())
+            {
+                for (T i : items)
+                    ret.add(i);
+            }
+
+            if (cmp < 0 && right != null)
+                right.getOrderedList(target, op, ret);
+        }
+        else
+        {
+            if (right != null)
+                right.getOrderedList(target, op, ret);
+
+            if (cmp >= 0 || target.isMin())
+            {
+                for (T i : items)
+                    ret.add(i);
+            }
+
+            if (cmp > 0 && left != null)
+                left.getOrderedList(target, op, ret);
+        }
     }
 }

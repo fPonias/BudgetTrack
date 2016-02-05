@@ -9,6 +9,7 @@ import com.munger.budgettrack.common.BTree;
 import com.munger.budgettrack.model.CashFlow;
 import com.munger.budgettrack.model.Transaction;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -19,73 +20,23 @@ import java.util.HashSet;
  */
 public class CashFlowService
 {
-    private static class MinCompare extends BTree.TreeComparer
-    {
-        public CashFlow target;
-
-        public MinCompare(CashFlow target)
-        {
-            this.target = target;
-        }
-
-        public int compareTo(BTree.TreeComparer c)
-        {
-            return (int) (target.startDate - c.valueOf());
-        }
-
-        public long valueOf()
-        {
-            return target.startDate;
-        }
-    }
-
-    private static class MaxCompare extends BTree.TreeComparer
-    {
-        public CashFlow target;
-
-        public MaxCompare(CashFlow target)
-        {
-            this.target = target;
-        }
-
-        public int compareTo(BTree.TreeComparer c)
-        {
-            return (int) (target.endDate - c.valueOf());
-        }
-
-        public long valueOf()
-        {
-            return target.endDate;
-        }
-    }
-
     public HashMap<String, CashFlow> income;
     public HashMap<String, CashFlow> expenditures;
+    public HashMap<Long, CashFlow> index;
     public ArrayList<CashFlow> cashFlows;
-    private BTree<MinCompare> incomeMinimums;
-    private BTree<MaxCompare> incomeMaximums;
-    private BTree<MinCompare> expMinimums;
-    private BTree<MaxCompare> expMaximums;
 
     public CashFlowService()
     {
         income = new HashMap<>();
         expenditures = new HashMap<>();
         cashFlows = new ArrayList<>();
-        incomeMinimums = new BTree<>(null);
-        incomeMaximums = new BTree<>(null);
-        expMinimums = new BTree<>(null);
-        expMaximums = new BTree<>(null);
+        index = new HashMap<>();
     }
 
     public CashFlowService(Bundle state)
     {
         Parcelable[] pararr = state.getParcelableArray("cashFlows");
         cashFlows = new ArrayList<>();
-        incomeMinimums = new BTree<>(null);
-        incomeMaximums = new BTree<>(null);
-        expMinimums = new BTree<>(null);
-        expMaximums = new BTree<>(null);
 
         for(Parcelable p : pararr)
             cashFlows.add((CashFlow) p);
@@ -146,82 +97,76 @@ public class CashFlowService
     {
         income = new HashMap<>();
         expenditures = new HashMap<>();
-        expMaximums = new BTree<>();
-        expMaximums = new BTree<>();
+        index = new HashMap<>();
 
         int sz = cashFlows.size();
         for (int i = 0; i < sz; i++)
         {
             CashFlow item = cashFlows.get(i);
             String key = Transaction.dateToKey(item.startDate);
-            MinCompare minCmp = new MinCompare(item);
-            MaxCompare maxCmp = new MaxCompare(item);
 
             if (item.amount >= 0)
             {
                 income.put(key, item);
-                incomeMinimums.add(minCmp);
-                incomeMaximums.add(maxCmp);
             }
             else
             {
                 expenditures.put(key, item);
-                expMinimums.add(minCmp);
-                expMaximums.add(maxCmp);
             }
+
+            index.put(item.id, item);
         }
     }
 
-    public float getTotal(boolean isExpenditure, Calendar start, int days)
+    public static enum Type
     {
-        ArrayList<CashFlow> list = getList(isExpenditure, start, days);
+        EXPENDITURE,
+        INCOME
+    };
+
+    public float getTotal(Type type, Calendar start, int days)
+    {
+        ArrayList<CashFlow> list = getList(type, start, days);
         float ret = 0.0f;
         for (CashFlow flow : list)
             ret += flow.amount;
 
-        if (!isExpenditure)
+        if (type == Type.INCOME)
             return ret;
         else
             return -ret;
     }
 
-    public ArrayList<CashFlow> getList(boolean isExpenditure, Calendar start, int days)
+    public ArrayList<CashFlow> getList(Type type, Calendar start, int days)
     {
-        ArrayList<CashFlow> ret = new ArrayList<>();
-        BTree<MinCompare> flowTreeMin;
-        BTree<MaxCompare> flowTreeMax;
-        CashFlow cmp = new CashFlow();
-        cmp.startDate = start.getTimeInMillis();
+        String startkey = Transaction.dateToKey(start);
         start.add(Calendar.DAY_OF_MONTH, days);
-        cmp.endDate = start.getTimeInMillis();
-        MinCompare cmpMin = new MinCompare(cmp);
-        MaxCompare cmpMax = new MaxCompare(cmp);
+        String endkey = Transaction.dateToKey(start);
 
-        if (isExpenditure)
-        {
-            flowTreeMin = expMinimums;
-            flowTreeMax = expMaximums;
-        }
+        String where = "startDate < ? and endDate >= ? ";
+        if (type == Type.EXPENDITURE)
+            where += "and amount < 0";
         else
+            where += "and amount > 0";
+
+        Cursor cur = Main.instance.dbHelper.db.query(CashFlow.TABLE_NAME, new String[]{"id"},
+                where, new String[]{endkey, startkey},
+                "id ASC"
+        );
+
+        ArrayList<CashFlow> ret = new ArrayList<>();
+        int sz = cur.getCount();
+        boolean success = cur.moveToFirst();
+        while (success)
         {
-            flowTreeMin = incomeMinimums;
-            flowTreeMax = incomeMaximums;
+            Long id = cur.getLong(0);
+            CashFlow t = index.get(id);
+            ret.add(t);
+
+            success = cur.moveToNext();
         }
 
-        ArrayList<MinCompare> minList = flowTreeMin.getOrderedList(cmpMin, false);
-        ArrayList<MaxCompare> maxList = flowTreeMax.getOrderedList(cmpMax, true);
-
-        HashSet<Long> indices = new HashSet<>();
-        for(MinCompare i : minList)
-        {
-            indices.add(i.target.id);
-        }
-
-        for(MaxCompare i : maxList)
-        {
-            if (indices.contains(i.target.id))
-                ret.add(i.target);
-        }
+        cur.close();
 
         return ret;
     }
