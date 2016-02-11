@@ -169,7 +169,7 @@ public class Chart extends Fragment
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
         int dow = TransactionService.getdow(cal);
-        cal.add(Calendar.DAY_OF_MONTH, -(dow - 1));
+        cal.add(Calendar.DAY_OF_MONTH, -(dow));
         int max = 7;
 
         float budget = Main.instance.transactionService.getWeeklyBudget(year, month, day);

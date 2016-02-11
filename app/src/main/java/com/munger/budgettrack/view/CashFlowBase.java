@@ -209,7 +209,9 @@ public abstract class CashFlowBase extends Fragment
         for (CashFlow tr : data)
         {
             IncomeViewStruct view = viewIndex.get(tr.id);
-            view.setEditable(editable);
+
+            if (view != null)
+                view.setEditable(editable);
         }
 
         list.invalidate();
