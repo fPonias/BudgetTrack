@@ -4,32 +4,23 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.AbsoluteLayout;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ListView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.munger.budgettrack.Main;
 import com.munger.budgettrack.R;
-import com.munger.budgettrack.model.CashFlow;
 import com.munger.budgettrack.model.Transaction;
 import com.munger.budgettrack.model.TransactionCategory;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -52,20 +43,20 @@ public class Categories extends Fragment implements Main.SubView
         public boolean editable = false;
         public void setEditable(boolean editable)
         {
-            editPanel.setVisibility(View.GONE);
-            nameLabel.setVisibility(View.GONE);
-
             if (editable)
             {
                 editPanel.setVisibility(View.VISIBLE);
+                nameLabel.setVisibility(View.GONE);
             }
             else
             {
+                editPanel.setVisibility(View.GONE);
                 nameLabel.setVisibility(View.VISIBLE);
             }
 
             this.editable = editable;
-            rowView.invalidate();
+
+            this.rowView.invalidate();
         }
 
         public boolean isEdited()
@@ -80,73 +71,16 @@ public class Categories extends Fragment implements Main.SubView
         }
     }
 
-    public static class CategoryAdapter extends ArrayAdapter<TransactionCategory>
-    {
-        public Categories parent;
-        public ArrayList<TransactionCategory> data;
-        public HashMap<TransactionCategory, CategoryEntryStruct> structIndex;
-
-        public CategoryAdapter(Categories parent, ArrayList<TransactionCategory> data)
-        {
-            super(Main.instance, R.layout.income_item, data);
-            this.data = data;
-            this.parent = parent;
-            structIndex = new HashMap<>();
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent)
-        {
-            TransactionCategory tr = data.get(position);
-            if (structIndex.containsKey(tr))
-            {
-                CategoryEntryStruct str = structIndex.get(tr);
-                return str.rowView;
-            }
-
-            LayoutInflater inflater = (LayoutInflater) Main.instance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-            final CategoryEntryStruct str = new CategoryEntryStruct();
-            str.rowView = (ViewGroup) inflater.inflate(R.layout.category_item, parent, false);
-
-            str.deleteBtn = (ImageButton) str.rowView.findViewById(R.id.g_categories_listitem_deleteBtn);
-            str.nameInput = (EditText) str.rowView.findViewById(R.id.g_categories_listitem_nameEdit);
-            str.nameLabel = (TextView) str.rowView.findViewById(R.id.g_categories_listitem_nameLbl);
-            str.editPanel = (View) str.rowView.findViewById(R.id.g_categories_listitem_editPanel);
-
-            str.rowView.removeViewAt(1);
-
-            str.data = tr;
-
-            str.nameLabel.setText(tr.category);
-            str.nameInput.setText(tr.category);
-
-            str.setEditable(this.parent.editable);
-
-            structIndex.put(tr, str);
-            this.parent.indexView(tr, str);
-
-
-            if (this.parent.editable && tr.category.isEmpty())
-            {
-                InputMethodManager imm = (InputMethodManager) Main.instance.getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.showSoftInput(str.nameInput, InputMethodManager.SHOW_IMPLICIT);
-            }
-
-
-            return str.rowView;
-        }
-    }
-
-    public ListView categoryList;
-    private CategoryAdapter listAdapter;
+    public LinearLayout categoryList;
     public boolean editable = true;
     public Menu menu;
-    private HashMap<Long, CategoryEntryStruct> widgetIndex;
     private ArrayList<CategoryEntryStruct> newWidgets;
     private ArrayList<CategoryEntryStruct> deletedWidgets;
     private ArrayList<CategoryEntryStruct> changedWidgets;
     public ArrayList<TransactionCategory> data;
+    private HashMap<View, CategoryEntryStruct> structIndex;
+    private View parentView;
+    private ViewGroup container;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -158,42 +92,76 @@ public class Categories extends Fragment implements Main.SubView
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
-        View ret = inflater.inflate(R.layout.fragment_category, container, false);
+        this.container = container;
+        parentView = inflater.inflate(R.layout.fragment_category, container, false);
 
-        categoryList = (ListView) ret.findViewById(R.id.g_categories_list);
+        categoryList = (LinearLayout) parentView.findViewById(R.id.g_categories_list);
 
         reset();
 
-        return ret;
+        return parentView;
     }
+
 
     public void reset()
     {
         newWidgets = new ArrayList<>();
         deletedWidgets = new ArrayList<>();
         changedWidgets = new ArrayList<>();
-        widgetIndex = new HashMap<>();
 
         editable = false;
 
         data = new ArrayList<>();
+        structIndex = new HashMap<>();
 
         ArrayList<TransactionCategory> cats = Main.instance.dbHelper.transactionCategories;
-        for (TransactionCategory cat : cats)
+        int sz = cats.size();
+        for (int i = 0; i < sz; i++)
         {
-            TransactionCategory clone = new TransactionCategory();
-            clone.id = cat.id;
-            clone.category = cat.category;
-            data.add(clone);
+            TransactionCategory item = cats.get(i);
+            TransactionCategory cln = new TransactionCategory();
+            cln.category = item.category;
+            cln.id = item.id;
+            data.add(cln);
         }
 
-        listAdapter = new CategoryAdapter(this, data);
+        update();
+    }
 
-        categoryList.setAdapter(listAdapter);
-        categoryList.setOnItemClickListener(new AdapterView.OnItemClickListener() {public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+    public void update()
+    {
+        categoryList.removeAllViews();
+
+        int sz = data.size();
+        for (int i = 0; i < sz; i++)
         {
+            TransactionCategory cat = data.get(i);
+            View v = getStruct(cat);
+            categoryList.addView(v);
+        }
+    }
 
-        }});
+    public View getStruct(TransactionCategory tr)
+    {
+        LayoutInflater inflater = (LayoutInflater) Main.instance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+        final CategoryEntryStruct str = new CategoryEntryStruct();
+        str.rowView = (ViewGroup) inflater.inflate(R.layout.category_item, container, false);
+
+        str.deleteBtn = (ImageButton) str.rowView.findViewById(R.id.g_categories_listitem_deleteBtn);
+        str.nameInput = (EditText) str.rowView.findViewById(R.id.g_categories_listitem_nameEdit);
+        str.nameLabel = (TextView) str.rowView.findViewById(R.id.g_categories_listitem_nameLbl);
+        str.editPanel = (View) str.rowView.findViewById(R.id.g_categories_listitem_editPanel);
+
+        str.data = tr;
+
+        str.nameLabel.setText(tr.category);
+        str.nameInput.setText(tr.category);
+
+        str.setEditable(editable);
+        structIndex.put(str.rowView, str);
+
+        return str.rowView;
     }
 
     @Override
@@ -237,22 +205,13 @@ public class Categories extends Fragment implements Main.SubView
     public void deleteClicked(CategoryEntryStruct str)
     {
         data.remove(str.data);
+        categoryList.removeView(str.rowView);
         deletedWidgets.add(str);
-        listAdapter.notifyDataSetChanged();
     }
 
     public void entryChanged(CategoryEntryStruct str)
     {
         changedWidgets.add(str);
-    }
-
-
-    public void indexView(TransactionCategory tr, CategoryEntryStruct str)
-    {
-        if (tr.id > -1)
-            widgetIndex.put(tr.id, str);
-        else
-            newWidgets.add(str);
     }
 
     public void toggleEdit()
@@ -265,11 +224,17 @@ public class Categories extends Fragment implements Main.SubView
         if (data == null)
             return;
 
-        for (TransactionCategory tr : data)
+        int sz = categoryList.getChildCount();
+        for (int i = 0; i < sz; i++)
         {
-            CategoryEntryStruct view = widgetIndex.get(tr.id);
-            view.setEditable(editable);
+            View v = categoryList.getChildAt(i);
+            CategoryEntryStruct str = structIndex.get(v);
+            if (str != null)
+                str.setEditable(editable);
         }
+
+        if (!editable)
+            Main.instance.hideKeyboard();
 
         categoryList.invalidate();
     }
@@ -278,8 +243,8 @@ public class Categories extends Fragment implements Main.SubView
     {
         TransactionCategory cat = new TransactionCategory();
         data.add(cat);
-
-        listAdapter.notifyDataSetChanged();
+        View v = getStruct(cat);
+        categoryList.addView(v);
     }
 
     public interface ChangeResult

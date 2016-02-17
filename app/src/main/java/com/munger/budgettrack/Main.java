@@ -260,6 +260,8 @@ public class Main extends AppCompatActivity
             reloadDepth--;
         }
 
+        hideKeyboard();
+
         return true;
     }
 
@@ -283,12 +285,19 @@ public class Main extends AppCompatActivity
         ft.commit();
 
 
+        hideKeyboard();
+    }
+
+    public void hideKeyboard()
+    {
+        return;/*
         View view = this.getCurrentFocus();
-        if (view != null)
-        {
-            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        }
+
+        if (view == null)
+            return;
+
+        InputMethodManager imm = (InputMethodManager) Main.instance.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);*/
     }
 
     public int reloadDepth = 0;
