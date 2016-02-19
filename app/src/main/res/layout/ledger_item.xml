@@ -8,12 +8,17 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" android:text="Date"
-        android:id="@+id/g_ledger_listitem_dateTxt" android:layout_weight="0.4"
+        android:id="@+id/g_ledger_listitem_dateTxt" android:layout_weight="0.2"
         android:layout_gravity="center_vertical"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" android:text="Amount"
-        android:id="@+id/g_ledger_listitem_amountTxt" android:layout_weight="0.5"
+        android:id="@+id/g_ledger_listitem_amountTxt" android:layout_weight="0.35"
+        android:layout_gravity="center_vertical"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:text="Category"
+        android:id="@+id/g_ledger_listitem_categoryTxt" android:layout_weight="0.35"
         android:layout_gravity="center_vertical"/>
     <ImageView
         android:layout_width="10dp"

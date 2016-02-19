@@ -90,7 +90,9 @@ public class Main extends AppCompatActivity
             //dbHelper.nuke();
             settings = new Settings();
             transactionService = new TransactionService();
+            transactionService.loadAll();
             cashFlowService = new CashFlowService();
+            cashFlowService.loadAll();
             remoteStorageService = new RemoteStorageService(this);
         }
 

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 
 import com.munger.budgettrack.Main;
+import com.munger.budgettrack.model.CashFlow;
 import com.munger.budgettrack.model.Transaction;
 import com.munger.budgettrack.model.TransactionCategory;
 
@@ -15,42 +16,199 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.TimeZone;
 
-/**
- * Created by codymunger on 12/28/15.
- */
 public class TransactionService
 {
-    public HashMap<String, ArrayList<Transaction>> sortedTransactions;
-    public HashMap<String, ArrayList<Transaction>> sortedCatastrophe;
-    public HashMap<String, ArrayList<Transaction>> sortedCategory;
-    public HashMap<String, Float> totaledTransactions;
-    public HashMap<String, Float> totaledCatastrophe;
-    public HashMap<String, Float> totaledCategory;
-    public HashMap<String, Float> totaledCategorySansCatastrophe;
-    public HashMap<String, Float> totaledCategoryWithExpenses;
-    public HashMap<String, Float> trendingAverages;
-    public HashMap<Long, Transaction> indexedTransactions;
+    public static class SortedData
+    {
+        protected TransactionService parent;
 
+        public HashMap<String, ArrayList<Transaction>> sortedTransactions;
+        public HashMap<String, ArrayList<Transaction>> sortedCatastrophe;
+        public HashMap<String, ArrayList<Transaction>> sortedCategory;
+        public HashMap<String, Float> totaledTransactions;
+        public HashMap<String, Float> totaledCatastrophe;
+        public HashMap<String, Float> totaledCategory;
+        public HashMap<String, Float> totaledCategorySansCatastrophe;
+        public HashMap<String, Float> totaledCategoryWithExpenses;
+        public HashMap<String, Float> trendingAverages;
+        public ArrayList<Transaction> transactions;
+
+        public Calendar startCal;
+        public int daySpan;
+        public Calendar endCal;
+        public int trendLength = 5;
+
+        public SortedData(TransactionService parent)
+        {
+            this.parent = parent;
+        }
+
+        public void load(Calendar cal, int days)
+        {
+            startCal = cal;
+            daySpan = days;
+            transactions = new ArrayList<>();
+
+            long transStart = startCal.getTimeInMillis();
+
+            endCal = Calendar.getInstance();
+            endCal.setTimeZone(cal.getTimeZone());
+            endCal.setTimeInMillis(transStart);
+            endCal.add(Calendar.DAY_OF_YEAR, days);
+
+
+            Cursor cur = Main.instance.dbHelper.db.query(Transaction.TABLE_NAME, new String[]{"id"},
+                    "date >= ? and date < ?", new String[]{Transaction.dateToKey(startCal), Transaction.dateToKey(endCal)},
+                    "date ASC"
+            );
+
+            while (cur.moveToNext())
+            {
+                long id = cur.getLong(0);
+
+                if (parent.indexedTransactions.containsKey(id))
+                {
+                    Transaction t = parent.indexedTransactions.get(id);
+                    transactions.add(t);
+                }
+            }
+
+            sort();
+            calculateTrend();
+
+            ArrayList<CashFlow> list = Main.instance.cashFlowService.getList(CashFlowService.Type.EXPENDITURE, startCal, daySpan);
+            sortExpenditures(list);
+        }
+
+        private void sort()
+        {
+            sortedTransactions = new HashMap<>();
+            totaledTransactions = new HashMap<>();
+            sortedCatastrophe = new HashMap<>();
+            totaledCatastrophe = new HashMap<>();
+            sortedCategory = new HashMap<>();
+            totaledCategory = new HashMap<>();
+            totaledCategorySansCatastrophe = new HashMap<>();
+            totaledCategoryWithExpenses = new HashMap<>();
+
+            long smallestDate = Long.MAX_VALUE;
+
+            for (Transaction t : transactions)
+            {
+                String key = Transaction.dateToKey(t.date);
+
+                if (t.date < smallestDate)
+                    smallestDate = t.date;
+
+                HashMap<String, ArrayList<Transaction>> sortedList = null;
+                HashMap<String, Float> totaledList = null;
+
+                if (!t.catastrophe)
+                {
+                    sortedList = sortedTransactions;
+                    totaledList = totaledTransactions;
+                } else
+                {
+                    sortedList = sortedCatastrophe;
+                    totaledList = totaledCatastrophe;
+                }
+
+
+                if (!sortedList.containsKey(key))
+                    sortedList.put(key, new ArrayList<Transaction>());
+
+                sortedList.get(key).add(t);
+
+                if (!totaledList.containsKey(key))
+                    totaledList.put(key, 0.0f);
+
+                float newTotal = totaledList.get(key) + t.amount;
+                totaledList.put(key, newTotal);
+
+                String category = Transaction.getCategory(t.categoryId).category;
+                if (!sortedCategory.containsKey(category))
+                    sortedCategory.put(category, new ArrayList<Transaction>());
+
+                sortedCategory.get(category).add(t);
+
+                if (!totaledCategory.containsKey(category))
+                {
+                    totaledCategory.put(category, 0.0f);
+                    totaledCategorySansCatastrophe.put(category, 0.0f);
+                    totaledCategoryWithExpenses.put(category, 0.0f);
+                }
+
+                newTotal = totaledCategory.get(category) + t.amount;
+                totaledCategory.put(category, newTotal);
+                totaledCategoryWithExpenses.put(category, newTotal);
+
+                if (t.catastrophe == false)
+                {
+                    newTotal = totaledCategorySansCatastrophe.get(category) + t.amount;
+                    totaledCategorySansCatastrophe.put(category, newTotal);
+                }
+            }
+        }
+
+        private void calculateTrend()
+        {
+            trendingAverages = new HashMap<>();
+
+            ArrayList<Float> valueQueue = new ArrayList<>();
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(startCal.getTimeInMillis());
+            long transEnd = endCal.getTimeInMillis();
+            while (cal.getTimeInMillis() <= transEnd)
+            {
+                String key = Transaction.dateToKey(cal);
+                float value = 0;
+                if (totaledTransactions.containsKey(key))
+                    value = totaledTransactions.get(key);
+
+                valueQueue.add(value);
+
+                if (valueQueue.size() == trendLength + 1)
+                    valueQueue.remove(0);
+
+                if (valueQueue.size() == trendLength)
+                {
+                    float total = 0;
+                    for (float item : valueQueue)
+                        total += item;
+
+                    float average = total / trendLength;
+                    trendingAverages.put(key, average);
+                }
+
+                cal.add(Calendar.DAY_OF_MONTH, 1);
+            }
+        }
+
+        private void sortExpenditures(ArrayList<CashFlow> expenditures)
+        {
+            for (CashFlow item : expenditures)
+            {
+                TransactionCategory category = Main.instance.dbHelper.transactionCategoryIndex.get(item.categoryId);
+                if (category == null)
+                    category = Main.instance.dbHelper.transactionCategories.get(0);
+
+                if(!totaledCategoryWithExpenses.containsKey(category.category))
+                    totaledCategoryWithExpenses.put(category.category, 0.0f);
+
+                float value = totaledCategoryWithExpenses.get(category.category);
+                value -= item.amount;
+                totaledCategoryWithExpenses.put(category.category, value);
+            }
+        }
+    }
+
+
+    public HashMap<Long, Transaction> indexedTransactions;
     public ArrayList<Transaction> transactions;
-    public int transYear = -1;
-    public int transMonth = -1;
-    public long transStart = 0;
-    public long transEnd = 0;
-    public int trendLength = 5;
 
     public TransactionService()
     {
-        sortedTransactions = new HashMap<>();
-        totaledTransactions = new HashMap<>();
-        sortedCatastrophe = new HashMap<>();
-        totaledCatastrophe = new HashMap<>();
-        sortedCategory = new HashMap<>();
-        totaledCategory = new HashMap<>();
-        totaledCategorySansCatastrophe = new HashMap<>();
-        totaledCategoryWithExpenses = new HashMap<>();
-        trendingAverages = new HashMap<>();
         indexedTransactions = new HashMap<>();
-
         transactions = new ArrayList<>();
     }
 
@@ -60,13 +218,6 @@ public class TransactionService
         transactions = new ArrayList<>();
         for(Parcelable p : pararr)
             transactions.add((Transaction) p);
-
-        transYear = state.getInt("transYear");
-        transMonth = state.getInt("transMonth");
-        transStart = state.getLong("transStart");
-        transEnd = state.getLong("transEnd");
-
-        sortTransactions(transactions);
     }
 
     public Bundle getState()
@@ -78,49 +229,19 @@ public class TransactionService
         for (int i = 0; i < sz; i++)
             tranArr[i] = transactions.get(i);
 
-        b.putParcelableArray("transactions", tranArr);
-        b.putInt("transYear", transYear);
-        b.putInt("transMonth", transMonth);
-        b.putLong("transStart", transStart);
-        b.putLong("transEnd", transEnd);
-
         return b;
     }
 
-    public void loadCurrentTransactions()
+    public void loadAll()
     {
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(System.currentTimeMillis());
-        cal.setTimeZone(TimeZone.getDefault());
-        int year = cal.get(Calendar.YEAR);
-        int month = cal.get(Calendar.MONTH);
-        int day = cal.get(Calendar.DAY_OF_MONTH);
-        loadTransactions(year, month);
-    }
-
-    public void loadTransactions(int year, int month)
-    {
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 0, 0, 0);
-        cal.add(Calendar.MONTH, -1);
-        transStart = cal.getTimeInMillis();
-        String start = Transaction.dateToKey(transStart);
-
-        cal.add(Calendar.MONTH, 2);
-        transEnd = cal.getTimeInMillis();
-        String end = Transaction.dateToKey(transEnd);
-
-
         Cursor cur = Main.instance.dbHelper.db.query(Transaction.TABLE_NAME, new String[]{"date", "amount", "desc", "catastrophe", "categoryId", "id"},
-                "date>? AND date<=?", new String[]{String.valueOf(start), String.valueOf(end)},
+                "", new String[]{},
                 "date ASC"
         );
 
         int sz = cur.getCount();
         ArrayList<Transaction> ret = new ArrayList<>();
-        boolean success = cur.moveToFirst();
-        while (success)
+        while (cur.moveToNext())
         {
             Transaction t = new Transaction();
             t.id = cur.getLong(5);
@@ -132,16 +253,12 @@ public class TransactionService
             t.categoryId = cur.getLong(4);
 
             ret.add(t);
-            success = cur.moveToNext();
+            indexedTransactions.put(t.id, t);
         }
 
         cur.close();
 
         transactions = ret;
-        transYear = year;
-        transMonth = month;
-
-        sortTransactions(transactions);
     }
 
     public void deleteTransaction(Transaction tr)
@@ -157,17 +274,14 @@ public class TransactionService
 
     public void commitTransaction(Transaction tr)
     {
-        if (tr.id == -1 && tr.date >= transStart && tr.date <= transEnd)
+        int sz = transactions.size();
+        for (int i = 0; i < sz; i++)
         {
-            int sz = transactions.size();
-            for (int i = 0; i < sz; i++)
+            Transaction trans = transactions.get(i);
+            if (trans.date < tr.date)
             {
-                Transaction trans = transactions.get(i);
-                if (trans.date < tr.date)
-                {
-                    transactions.add(i, tr);
-                    break;
-                }
+                transactions.add(i, tr);
+                break;
             }
         }
 
@@ -196,112 +310,11 @@ public class TransactionService
         changeListeners.remove(listener);
     }
 
-    private void sortTransactions(ArrayList<Transaction> list)
-    {
-        sortedTransactions = new HashMap<>();
-        totaledTransactions = new HashMap<>();
-        sortedCatastrophe = new HashMap<>();
-        totaledCatastrophe = new HashMap<>();
-        sortedCategory = new HashMap<>();
-        totaledCategory = new HashMap<>();
-        totaledCategorySansCatastrophe = new HashMap<>();
-        totaledCategoryWithExpenses = new HashMap<>();
-        trendingAverages = new HashMap<>();
-
-        indexedTransactions = new HashMap<>();
-
-        long smallestDate = Long.MAX_VALUE;
-
-        for (Transaction t : list)
-        {
-            String key = Transaction.dateToKey(t.date);
-
-            if (t.date < smallestDate)
-                smallestDate = t.date;
-
-            HashMap<String, ArrayList<Transaction>> sortedList = null;
-            HashMap<String, Float> totaledList = null;
-
-            if (!t.catastrophe)
-            {
-                sortedList = sortedTransactions;
-                totaledList = totaledTransactions;
-            }
-            else
-            {
-                sortedList = sortedCatastrophe;
-                totaledList = totaledCatastrophe;
-            }
-
-
-            if (!sortedList.containsKey(key))
-                sortedList.put(key, new ArrayList<Transaction>());
-
-            sortedList.get(key).add(t);
-
-            if (!totaledList.containsKey(key))
-                totaledList.put(key, 0.0f);
-
-            float newTotal = totaledList.get(key) + t.amount;
-            totaledList.put(key, newTotal);
-
-            String category = Transaction.getCategory(t.categoryId).category;
-            if (!sortedCategory.containsKey(category))
-                sortedCategory.put(category, new ArrayList<Transaction>());
-
-            sortedCategory.get(category).add(t);
-
-            if (!totaledCategory.containsKey(category))
-            {
-                totaledCategory.put(category, 0.0f);
-                totaledCategorySansCatastrophe.put(category, 0.0f);
-                totaledCategoryWithExpenses.put(category, 0.0f);
-            }
-
-            newTotal = totaledCategory.get(category) + t.amount;
-            totaledCategory.put(category, newTotal);
-
-            if (t.catastrophe == false)
-            {
-                newTotal = totaledCategorySansCatastrophe.get(category) + t.amount;
-                totaledCategorySansCatastrophe.put(category, newTotal);
-            }
-
-
-            indexedTransactions.put(t.id, t);
-        }
-
-        ArrayList<Float> valueQueue = new ArrayList<>();
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(transStart);
-        while (cal.getTimeInMillis() <= transEnd)
-        {
-            String key = Transaction.dateToKey(cal);
-            float value = 0;
-            if (totaledTransactions.containsKey(key))
-                value = totaledTransactions.get(key);
-
-            valueQueue.add(value);
-
-            if (valueQueue.size() == trendLength + 1)
-                valueQueue.remove(0);
-
-            if (valueQueue.size() == trendLength)
-            {
-                float total = 0;
-                for (float item : valueQueue)
-                    total += item;
-
-                float average = total / trendLength;
-                trendingAverages.put(key, average);
-            }
-
-            cal.add(Calendar.DAY_OF_MONTH, 1);
-        }
-    }
-
     public float getTrend(int year, int month, int day)
     {
+        return 0;
+
+        /*
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
         cal.set(year, month, day);
@@ -311,26 +324,42 @@ public class TransactionService
             return trendingAverages.get(key);
         else
             return 0;
+            */
     }
 
-    public float getMonthlyTotal(int year, int month)
+    private HashMap<String, SortedData> sortedDataCache = new HashMap<>();
+
+    public SortedData getSortedData(Calendar cal, int days)
+    {
+        String key = cal.get(Calendar.YEAR) + "-" + cal.get(Calendar.MONTH) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "-" + String.valueOf(days);
+        if (sortedDataCache.containsKey(key))
+            return sortedDataCache.get(key);
+
+        SortedData data = new SortedData(this);
+        data.load(cal, days);
+
+        sortedDataCache.put(key, data);
+        return data;
+    }
+
+    public float getMonthlyTotal(Calendar c)
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 1);
-        float total = 0;
+        cal.setTimeInMillis(c.getTimeInMillis());
+        cal.set(Calendar.DAY_OF_MONTH, 1);
 
         int max = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+        SortedData data = getSortedData(cal, max);
+        float total = 0;
+
         for (int i = 0; i < max; i++)
         {
             long date = cal.getTimeInMillis();
             String key = Transaction.dateToKey(date);
 
-            if (totaledTransactions.containsKey(key))
-                total += totaledTransactions.get(key);
-
-            //if (totaledCatastrophe.containsKey(key))
-            //    total += totaledCatastrophe.get(key);
+            if (data.totaledTransactions.containsKey(key))
+                total += data.totaledTransactions.get(key);
 
             cal.add(Calendar.DAY_OF_MONTH, 1);
         }
@@ -338,21 +367,24 @@ public class TransactionService
         return total;
     }
 
-    public float getCatastropheTotal(int year, int month)
+    public float getCatastropheTotal(Calendar c)
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 1);
+        cal.setTimeInMillis(c.getTimeInMillis());
+        cal.set(Calendar.DAY_OF_MONTH, 1);
         float total = 0;
 
         int max = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+        SortedData data = getSortedData(cal, max);
+
         for (int i = 0; i < max; i++)
         {
             long date = cal.getTimeInMillis();
             String key = Transaction.dateToKey(date);
 
-            if (totaledCatastrophe.containsKey(key))
-                total += totaledCatastrophe.get(key);
+            if (data.totaledCatastrophe.containsKey(key))
+                total += data.totaledCatastrophe.get(key);
 
             cal.add(Calendar.DAY_OF_MONTH, 1);
         }
@@ -360,21 +392,22 @@ public class TransactionService
         return total;
     }
 
-    public float getWeeklyTotal(int year, int month, int day)
+    public float getWeeklyTotal(Calendar c)
     {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, day);
+        cal.setTimeInMillis(c.getTimeInMillis());
         int dow = getdow(cal);
         cal.add(Calendar.DAY_OF_MONTH, -(dow - 1));
 
         float ret = 0.0f;
+        SortedData data = getSortedData(cal, 7);
         for (int i = 0; i < 7; i++)
         {
             long date = cal.getTimeInMillis();
             String key = Transaction.dateToKey(date);
-            if (totaledTransactions.containsKey(key))
-                ret += totaledTransactions.get(key);
+            if (data.totaledTransactions.containsKey(key))
+                ret += data.totaledTransactions.get(key);
 
             cal.add(Calendar.DAY_OF_MONTH, 1);
         }
@@ -382,12 +415,9 @@ public class TransactionService
         return ret;
     }
 
-    public float getMonthlyBudget(int year, int month)
+    public float getMonthlyBudget(Calendar cal)
     {
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 1);
-        int sz = cal.getMaximum(Calendar.DAY_OF_MONTH);
+        int sz = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
         float income = Main.instance.cashFlowService.getTotal(CashFlowService.Type.INCOME, cal, sz);
         float expense = Main.instance.cashFlowService.getTotal(CashFlowService.Type.EXPENDITURE, cal, sz);
@@ -397,20 +427,22 @@ public class TransactionService
         return monthlyBudget;
     }
 
-    public float getWeeklyBudget(int year, int month, int day)
+    public float getWeeklyBudget(Calendar c)
     {
+        int year = c.get(Calendar.YEAR);
+        int month = c.get(Calendar.MONTH);
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getDefault());
         cal.set(year, month, 1);
 
         cal.add(Calendar.MONTH, -1);
-        float dailyBudgetLastMonth = getDailyBudget(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH));
+        float dailyBudgetLastMonth = getDailyBudget(cal);
         cal.add(Calendar.MONTH, 1);
-        float dailyBudgetThisMonth = getDailyBudget(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH));
+        float dailyBudgetThisMonth = getDailyBudget(cal);
         cal.add(Calendar.MONTH, 1);
-        float dailyBudgetNextMonth = getDailyBudget(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH));
+        float dailyBudgetNextMonth = getDailyBudget(cal);
 
-        cal.set(year, month, day);
+        cal.set(year, month, c.get(Calendar.DAY_OF_YEAR));
         int dow = getdow(cal);
         cal.add(Calendar.DAY_OF_MONTH, -(dow - 1));
 
@@ -431,14 +463,10 @@ public class TransactionService
         return ret;
     }
 
-    public float getDailyBudget(int year, int month)
+    public float getDailyBudget(Calendar cal)
     {
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeZone(TimeZone.getDefault());
-        cal.set(year, month, 1);
-
-        int dayCount = cal.getMaximum(Calendar.DAY_OF_MONTH);
-        float monthlyBudget = getMonthlyBudget(year, month);
+        int dayCount = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+        float monthlyBudget = getMonthlyBudget(cal);
         float dailyBudget = monthlyBudget / dayCount;
 
         return dailyBudget;

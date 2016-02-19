@@ -37,10 +37,6 @@ public class Overview extends Fragment
     public TextView totalBudgetMonthTxt;
     public TextView totalAvgMonthTxt;
 
-    public TextView trendTxt;
-    public TextView trendDeltaTxt;
-    public TextView projectedSurplusTxt;
-
     public TextView remainingCatastropheTxt;
 
     private TransactionService.TransactionsChangedListener dataListener;
@@ -74,10 +70,6 @@ public class Overview extends Fragment
         avgSpendingMonthTxt = (TextView) ret.findViewById(R.id.g_overview_averageMonthTxt);
         totalBudgetMonthTxt = (TextView) ret.findViewById(R.id.g_overview_maxBudgetMonth);
         totalAvgMonthTxt = (TextView) ret.findViewById(R.id.g_overview_goalAverageMonth);
-
-        trendTxt = (TextView) ret.findViewById(R.id.g_overview_trendTxt);
-        trendDeltaTxt = (TextView) ret.findViewById(R.id.g_overview_trendChangeTxt);
-        projectedSurplusTxt = (TextView) ret.findViewById(R.id.g_overview_projectedSurplus);
 
         remainingCatastropheTxt = (TextView) ret.findViewById(R.id.g_overview_remainingCatstropheTxt);
 
@@ -195,37 +187,18 @@ public class Overview extends Fragment
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
 
-        Main.instance.transactionService.loadTransactions(year, month);
-        Main.instance.cashFlowService.loadData();
-
         int dayCount = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-        float monthTotal = Main.instance.transactionService.getMonthlyTotal(year, month);
-        float monthaverage = monthTotal / (day + 1.0f);
+        float monthTotal = Main.instance.transactionService.getMonthlyTotal(cal);
+        float monthaverage = monthTotal / ((float)day);
 
-        float cataTotal = Main.instance.transactionService.getCatastropheTotal(year, month);
+        float cataTotal = Main.instance.transactionService.getCatastropheTotal(cal);
         float remainingCata = Main.instance.settings.emergencyFund - cataTotal;
         float cataaverate = cataTotal / dayCount;
 
 
-        float monthlyBudget = Main.instance.transactionService.getMonthlyBudget(year, month);
+        float monthlyBudget = Main.instance.transactionService.getMonthlyBudget(cal);
         float monthlyBudgetGoal = (float) (monthlyBudget / (double) dayCount);
         float remainingBudgetMonth = monthlyBudget - monthTotal;
-
-        float trend = Main.instance.transactionService.getTrend(year, month, day);
-        cal.add(Calendar.DAY_OF_MONTH, -1);
-        float yesterTrend = Main.instance.transactionService.getTrend(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
-        cal.add(Calendar.DAY_OF_MONTH, 1);
-        float trendDelta = trend - yesterTrend;
-        trendTxt.setText(getFormattedAmount(trend));
-        String delta = (trendDelta >= 0) ? "+" : "";
-        delta += getFormattedAmount(trendDelta).substring(1);
-        trendDeltaTxt.setText(delta);
-
-        float trendGuess = (yesterTrend + monthaverage) * 0.5f;
-        float surplusRemainder = trendGuess * (dayCount - day);
-        float surplus = remainingBudgetMonth - surplusRemainder;
-        if (remainingCata < 0)
-            surplus += remainingCata;
 
 
         remainingDaysMonthTxt.setText(String.valueOf(day) + "/");
@@ -236,18 +209,16 @@ public class Overview extends Fragment
         setColor(avgSpendingMonthTxt, 0, 0, monthaverage, monthlyBudgetGoal, warningTextColor, negativeTextColor, defaultTextColor);
         totalBudgetMonthTxt.setText(getFormattedAmount(monthlyBudget));
         totalAvgMonthTxt.setText(getFormattedAmount(monthlyBudgetGoal));
-        projectedSurplusTxt.setText(getFormattedAmount(surplus));
-        setColor(projectedSurplusTxt, 0, 0, surplus, Float.MAX_VALUE, warningTextColor, negativeTextColor, defaultTextColor);
 
         remainingCatastropheTxt.setText(getFormattedAmount(remainingCata));
         setColor(remainingCatastropheTxt, 0, 0, remainingCata, Float.MAX_VALUE, warningTextColor, negativeTextColor, defaultTextColor);
 
 
-        float weekTotal = Main.instance.transactionService.getWeeklyTotal(year, month, day);
+        float weekTotal = Main.instance.transactionService.getWeeklyTotal(cal);
         int dow = TransactionService.getdow(cal) + 1;
         float weekaverage = weekTotal / (dow);
 
-        float weeklyBudget = Main.instance.transactionService.getWeeklyBudget(year, month, day);
+        float weeklyBudget = Main.instance.transactionService.getWeeklyBudget(cal);
         float weeklyAverageGoal = weeklyBudget / 7.0f;
         float remainingBudgetWeek = weeklyBudget - weekTotal;
 

@@ -20,6 +20,7 @@ import android.widget.TextView;
 import com.munger.budgettrack.Main;
 import com.munger.budgettrack.R;
 import com.munger.budgettrack.model.Transaction;
+import com.munger.budgettrack.model.TransactionCategory;
 import com.munger.budgettrack.service.TransactionService;
 
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ public class Ledger extends Fragment
         public ImageButton deleteBtn;
         public TextView dateLbl;
         public TextView amountLbl;
+        public TextView catLbl;
         public ImageView cataImg;
 
         public Transaction data;
@@ -75,6 +77,7 @@ public class Ledger extends Fragment
             str.deleteBtn = (ImageButton) str.rowView.findViewById(R.id.g_ledger_listitem_deleteBtn);
             str.dateLbl = (TextView) str.rowView.findViewById(R.id.g_ledger_listitem_dateTxt);
             str.amountLbl = (TextView) str.rowView.findViewById(R.id.g_ledger_listitem_amountTxt);
+            str.catLbl = (TextView) str.rowView.findViewById(R.id.g_ledger_listitem_categoryTxt);
             str.cataImg = (ImageView) str.rowView.findViewById(R.id.g_ledger_listitem_catastrophic);
 
             Transaction tr = data.get(position);
@@ -84,6 +87,12 @@ public class Ledger extends Fragment
             str.dateLbl.setText(dt);
 
             str.amountLbl.setText("$" + String.valueOf(tr.amount));
+
+            TransactionCategory cat = Main.instance.dbHelper.transactionCategoryIndex.get(tr.categoryId);
+            if (cat != null)
+                str.catLbl.setText(cat.category);
+            else
+                str.catLbl.setText("");
 
             if (tr.catastrophe)
                 str.cataImg.setVisibility(View.VISIBLE);

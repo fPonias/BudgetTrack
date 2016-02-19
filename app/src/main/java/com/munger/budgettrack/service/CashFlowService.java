@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TimeZone;
 
 /**
  * Created by codymunger on 12/31/15.
@@ -58,7 +59,7 @@ public class CashFlowService
         return b;
     }
 
-    public void loadData()
+    public void loadAll()
     {
         Cursor cur = Main.instance.dbHelper.db.query(CashFlow.TABLE_NAME, new String[]{"startDate", "endDate", "amount", "desc", "categoryId", "id"},
                 "", new String[]{},
@@ -137,8 +138,12 @@ public class CashFlowService
             return -ret;
     }
 
-    public ArrayList<CashFlow> getList(Type type, Calendar start, int days)
+    public ArrayList<CashFlow> getList(Type type, Calendar c, int days)
     {
+        Calendar start = Calendar.getInstance();
+        start.setTimeZone(TimeZone.getDefault());
+        start.setTimeInMillis(c.getTimeInMillis());
+        start.set(Calendar.DAY_OF_MONTH, 1);
         String startkey = Transaction.dateToKey(start);
         start.add(Calendar.DAY_OF_MONTH, days);
         String endkey = Transaction.dateToKey(start);

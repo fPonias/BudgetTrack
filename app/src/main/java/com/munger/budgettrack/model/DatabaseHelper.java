@@ -130,6 +130,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
     public Context context;
 
     public ArrayList<TransactionCategory> transactionCategories = null;
+    public HashMap<Long, TransactionCategory> transactionCategoryIndex = null;
     public ArrayList<DBDelta> changeLog = null;
 
     public DatabaseHelper(Context context)
@@ -329,6 +330,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
     public ArrayList<TransactionCategory> reloadTransactionCategories()
     {
         transactionCategories = new ArrayList<>();
+        transactionCategoryIndex = new HashMap<>();
 
         Cursor cur = database.query(TransactionCategory.TABLE_NAME, new String[]{"category", "id"},
                 "", new String[]{}, null, null, "id ASC");
@@ -341,6 +343,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
             cat.id = cur.getLong(1);
 
             transactionCategories.add(cat);
+            transactionCategoryIndex.put(cat.id, cat);
             success = cur.moveToNext();
         }
 
@@ -538,8 +541,6 @@ public class DatabaseHelper extends SQLiteOpenHelper
 
         loadTransactionCategories();
         loadChangeLog();
-        Main.instance.transactionService.loadCurrentTransactions();
-        Main.instance.cashFlowService.loadData();
 
         Main.instance.reloadView();
     }

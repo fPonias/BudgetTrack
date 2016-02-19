@@ -33,6 +33,8 @@ public abstract class CashFlowEntryBase extends Fragment
     public EditText endTxt;
     public Spinner categorySpn;
 
+    protected ArrayList<TransactionCategory> transCats;
+
     private CashFlow data;
 
     public CashFlowEntryBase()
@@ -67,7 +69,7 @@ public abstract class CashFlowEntryBase extends Fragment
         amountTxt.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED);
 
         categorySpn = (Spinner) ret.findViewById(R.id.g_incomeentry_categorySpinner);
-        ArrayList<TransactionCategory> transCats = Main.instance.dbHelper.loadTransactionCategories();
+        transCats = Main.instance.dbHelper.loadTransactionCategories();
         ArrayAdapter<TransactionCategory> arrad = new ArrayAdapter<TransactionCategory>(Main.instance, android.R.layout.simple_list_item_1, transCats);
         categorySpn.setAdapter(arrad);
 
@@ -79,6 +81,18 @@ public abstract class CashFlowEntryBase extends Fragment
 
             descTxt.setText(data.desc);
             amountTxt.setText(getAmountString(data));
+
+            int i = 0;
+            int sz = transCats.size();
+            for (i = 0; i < sz; i++)
+            {
+                TransactionCategory cat = transCats.get(i);
+                if (cat.id == data.categoryId)
+                {
+                    categorySpn.setSelection(i);
+                    break;
+                }
+            }
         }
         else
         {

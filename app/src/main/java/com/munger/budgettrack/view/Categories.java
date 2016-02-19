@@ -5,6 +5,8 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -74,9 +76,9 @@ public class Categories extends Fragment implements Main.SubView
     public LinearLayout categoryList;
     public boolean editable = true;
     public Menu menu;
-    private ArrayList<CategoryEntryStruct> newWidgets;
-    private ArrayList<CategoryEntryStruct> deletedWidgets;
-    private ArrayList<CategoryEntryStruct> changedWidgets;
+    protected ArrayList<CategoryEntryStruct> newWidgets;
+    protected ArrayList<CategoryEntryStruct> deletedWidgets;
+    protected ArrayList<CategoryEntryStruct> changedWidgets;
     public ArrayList<TransactionCategory> data;
     private HashMap<View, CategoryEntryStruct> structIndex;
     private View parentView;
@@ -98,6 +100,8 @@ public class Categories extends Fragment implements Main.SubView
         categoryList = (LinearLayout) parentView.findViewById(R.id.g_categories_list);
 
         reset();
+        if(editable)
+            toggleEdit2();
 
         return parentView;
     }
@@ -108,8 +112,6 @@ public class Categories extends Fragment implements Main.SubView
         newWidgets = new ArrayList<>();
         deletedWidgets = new ArrayList<>();
         changedWidgets = new ArrayList<>();
-
-        editable = false;
 
         data = new ArrayList<>();
         structIndex = new HashMap<>();
@@ -136,12 +138,42 @@ public class Categories extends Fragment implements Main.SubView
         for (int i = 0; i < sz; i++)
         {
             TransactionCategory cat = data.get(i);
-            View v = getStruct(cat);
-            categoryList.addView(v);
+            CategoryEntryStruct str = getStruct(cat);
+            categoryList.addView(str.rowView);
         }
     }
 
-    public View getStruct(TransactionCategory tr)
+    private View.OnClickListener deleteListener;
+    private static class ChangeListener implements TextWatcher
+    {
+        public Categories parent;
+        public CategoryEntryStruct target;
+        public ChangeListener(Categories parent, CategoryEntryStruct str)
+        {
+            this.parent = parent;
+            target = str;
+        }
+
+        public void beforeTextChanged(CharSequence s, int start, int count, int after)
+        {}
+
+        public void onTextChanged(CharSequence s, int start, int before, int count)
+        {
+            target.nameLabel.setText(s);
+            target.data.category = s.toString();
+
+            if (!parent.newWidgets.contains(target))
+            {
+                if (!parent.changedWidgets.contains(target))
+                    parent.changedWidgets.add(target);
+            }
+        }
+
+        public void afterTextChanged(Editable s)
+        {}
+    }
+
+    public CategoryEntryStruct getStruct(TransactionCategory tr)
     {
         LayoutInflater inflater = (LayoutInflater) Main.instance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
@@ -161,7 +193,21 @@ public class Categories extends Fragment implements Main.SubView
         str.setEditable(editable);
         structIndex.put(str.rowView, str);
 
-        return str.rowView;
+        if (deleteListener == null)
+        {
+            deleteListener = new View.OnClickListener() {public void onClick(View v)
+            {
+                CategoryEntryStruct str = (CategoryEntryStruct) v.getTag();
+                deleteClicked(str);
+            }};
+        }
+        str.deleteBtn.setTag(str);
+        str.deleteBtn.setOnClickListener(deleteListener);
+
+        str.nameInput.addTextChangedListener(new ChangeListener(this, str));
+
+
+        return str;
     }
 
     @Override
@@ -206,7 +252,11 @@ public class Categories extends Fragment implements Main.SubView
     {
         data.remove(str.data);
         categoryList.removeView(str.rowView);
-        deletedWidgets.add(str);
+
+        if (newWidgets.contains(str))
+            newWidgets.remove(str);
+        else
+            deletedWidgets.add(str);
     }
 
     public void entryChanged(CategoryEntryStruct str)
@@ -216,10 +266,27 @@ public class Categories extends Fragment implements Main.SubView
 
     public void toggleEdit()
     {
+        if (editable)
+        {
+            checkSave(new ChangeResult() {public void result(boolean choice)
+            {
+                if (choice == true)
+                    toggleEdit2();
+            }});
+        }
+        else
+            toggleEdit2();
+    }
+
+    private void toggleEdit2()
+    {
         editable = !editable;
 
-        MenuItem item = (MenuItem) menu.findItem(R.id.action_add);
-        item.setVisible(editable);
+        if (menu != null)
+        {
+            MenuItem item = (MenuItem) menu.findItem(R.id.action_add);
+            item.setVisible(editable);
+        }
 
         if (data == null)
             return;
@@ -243,8 +310,9 @@ public class Categories extends Fragment implements Main.SubView
     {
         TransactionCategory cat = new TransactionCategory();
         data.add(cat);
-        View v = getStruct(cat);
-        categoryList.addView(v);
+        CategoryEntryStruct str = getStruct(cat);
+        categoryList.addView(str.rowView);
+        newWidgets.add(str);
     }
 
     public interface ChangeResult
@@ -290,6 +358,7 @@ public class Categories extends Fragment implements Main.SubView
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 saveChanges();
+                reset();
                 callback.result(true);
             }
         });
@@ -315,18 +384,22 @@ public class Categories extends Fragment implements Main.SubView
     {
         for(CategoryEntryStruct str : newWidgets)
         {
+
             str.data.commit();
         }
+        newWidgets = new ArrayList<>();
 
         for(CategoryEntryStruct str : deletedWidgets)
         {
             str.data.delete();
         }
+        deletedWidgets = new ArrayList<>();
 
         for(CategoryEntryStruct str : changedWidgets)
         {
             str.data.commit();
         }
+        changedWidgets = new ArrayList<>();
 
         Main.instance.dbHelper.reloadTransactionCategories();
     }

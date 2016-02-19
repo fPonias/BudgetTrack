@@ -66,25 +66,37 @@ public class Chart extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
+        Calendar c = Calendar.getInstance();
+        c.setTimeZone(TimeZone.getDefault());
+        c.setTimeInMillis(System.currentTimeMillis());
+
         View ret = inflater.inflate(R.layout.fragment_chart, container, false);
 
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getDefault());
+        cal.set(c.get(Calendar.YEAR), c.get(Calendar.MONTH), 1);
+        int max = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
         chartMonthly = (CombinedChart) ret.findViewById(R.id.g_chart_mainChart);
-        populateMonthly();
+        populateMonthly(cal);
 
         chartWeekly = (CombinedChart) ret.findViewById(R.id.g_chart_mainChartWeekly);
-        populateWeekly();
+        populateWeekly(c);
 
+        cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getDefault());
+        cal.setTimeInMillis(c.getTimeInMillis());
+        cal.add(Calendar.DAY_OF_YEAR, -60);
         chartSummary = (PieChart) ret.findViewById(R.id.g_chart_spendingPie);
-        populatePie(chartSummary, false);
+        populatePie(chartSummary, cal, 60, false);
 
         chartTotalSummary = (PieChart) ret.findViewById(R.id.g_chart_totalSpendingPie);
-        populatePie(chartTotalSummary, true);
+        populatePie(chartTotalSummary, cal, 60, true);
 
 
         return ret;
     }
 
-    private void populateMonthly()
+    private void populateMonthly(Calendar cal)
     {
         chartMonthly.setDescription("");
         chartMonthly.setBackgroundColor(Color.WHITE);
@@ -105,17 +117,10 @@ public class Chart extends Fragment
         XAxis xAxis = chartMonthly.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTH_SIDED);
 
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(System.currentTimeMillis());
-        cal.setTimeZone(TimeZone.getDefault());
-        int year = cal.get(Calendar.YEAR);
-        int month = cal.get(Calendar.MONTH);
-        int day = cal.get(Calendar.DAY_OF_MONTH);
-        cal.set(year, month, 1);
+
         int max = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-        float budget = Main.instance.transactionService.getDailyBudget(year, month);
-        float total = Main.instance.transactionService.getMonthlyTotal(year, month);
-        float average = total / (day + 1);
+        float budget = Main.instance.transactionService.getDailyBudget(cal);
+        float total = Main.instance.transactionService.getMonthlyTotal(cal);
 
         String[] columns = new String[max];
         for (int i = 0; i < max; i++)
@@ -130,7 +135,6 @@ public class Chart extends Fragment
 
 
         generateGoalData(lineData, budget, max);
-        generateAverageData(lineData, average, max);
         generateTrendData(lineData, cal, max);
         data.setData(lineData);
         data.setData(generateBarData(cal, max));
@@ -141,7 +145,7 @@ public class Chart extends Fragment
 
 
 
-    private void populateWeekly()
+    private void populateWeekly(Calendar c)
     {
         chartWeekly.setDescription("");
         chartMonthly.setBackgroundColor(Color.WHITE);
@@ -163,17 +167,14 @@ public class Chart extends Fragment
         xAxis.setPosition(XAxis.XAxisPosition.BOTH_SIDED);
 
         Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(System.currentTimeMillis());
+        cal.setTimeInMillis(c.getTimeInMillis());
         cal.setTimeZone(TimeZone.getDefault());
-        int year = cal.get(Calendar.YEAR);
-        int month = cal.get(Calendar.MONTH);
-        int day = cal.get(Calendar.DAY_OF_MONTH);
         int dow = TransactionService.getdow(cal);
         cal.add(Calendar.DAY_OF_MONTH, -(dow));
         int max = 7;
 
-        float budget = Main.instance.transactionService.getWeeklyBudget(year, month, day);
-        float total = Main.instance.transactionService.getWeeklyTotal(year, month, day);
+        float budget = Main.instance.transactionService.getWeeklyBudget(cal);
+        float total = Main.instance.transactionService.getWeeklyTotal(cal);
         float average = total / (dow + 1);
 
         String[] columns = new String[max];
@@ -282,14 +283,15 @@ public class Chart extends Fragment
         BarData d = new BarData();
 
         ArrayList<BarEntry> entries = new ArrayList<BarEntry>();
+        TransactionService.SortedData data = Main.instance.transactionService.getSortedData(cal, days);
 
         for(int i = 0; i < days; i++)
         {
             String key = Transaction.dateToKey(cal);
 
-            if (Main.instance.transactionService.sortedTransactions.containsKey(key))
+            if (data.sortedTransactions.containsKey(key))
             {
-                ArrayList<Transaction> vals = Main.instance.transactionService.sortedTransactions.get(key);
+                ArrayList<Transaction> vals = data.sortedTransactions.get(key);
                 int sz = vals.size();
 
                 //float[] list = new float[sz];
@@ -318,7 +320,7 @@ public class Chart extends Fragment
         return d;
     }
 
-    private void populatePie(PieChart chart, boolean includeExpenses)
+    private void populatePie(PieChart chart, Calendar cal, int days, boolean includeExpenses)
     {
         chart.setUsePercentValues(true);
         chart.setDescription("");
@@ -340,7 +342,7 @@ public class Chart extends Fragment
         chart.setRotationEnabled(false);
         chart.setHighlightPerTapEnabled(true);
 
-        setPieData(chart, includeExpenses);
+        setPieData(chart, cal, days, includeExpenses);
 
         chart.animateY(1400, Easing.EasingOption.EaseInOutQuad);
         // chartSummary.spin(2000, 0, 360);
@@ -352,16 +354,18 @@ public class Chart extends Fragment
         l.setYOffset(0f);
     }
 
-    private void setPieData(PieChart chart, boolean includeExpenses)
+    private void setPieData(PieChart chart, Calendar cal, int days, boolean includeExpenses)
     {
         ArrayList<com.github.mikephil.charting.data.Entry> yVals1 = new ArrayList<com.github.mikephil.charting.data.Entry>();
         ArrayList<String> xVals = new ArrayList<String>();
         HashMap<String, Float> dataSource;
 
+        TransactionService.SortedData data = Main.instance.transactionService.getSortedData(cal, days);
+
         if (includeExpenses)
-            dataSource = Main.instance.transactionService.totaledCategory;
+            dataSource = data.totaledCategoryWithExpenses;
         else
-            dataSource = Main.instance.transactionService.totaledCategorySansCatastrophe;
+            dataSource = data.totaledCategorySansCatastrophe;
 
         // IMPORTANT: In a PieChart, no values (Entry) should have the same
         // xIndex (even if from different DataSets), since no values can be
@@ -413,11 +417,11 @@ public class Chart extends Fragment
 
         dataSet.setColors(colors);
 
-        PieData data = new PieData(xVals, dataSet);
-        data.setValueFormatter(new PercentFormatter());
-        data.setValueTextSize(8f);
-        data.setValueTextColor(Color.BLACK);
-        chart.setData(data);
+        PieData pdata = new PieData(xVals, dataSet);
+        pdata.setValueFormatter(new PercentFormatter());
+        pdata.setValueTextSize(8f);
+        pdata.setValueTextColor(Color.BLACK);
+        chart.setData(pdata);
 
         // undo all highlights
         chart.highlightValues(null);
