@@ -14,6 +14,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Set;
 import java.util.TimeZone;
 
 public class TransactionService
@@ -265,6 +266,7 @@ public class TransactionService
     {
         transactions.remove(tr);
         tr.delete();
+        invalidateData(tr.date);
 
         for(TransactionsChangedListener listener : changeListeners)
         {
@@ -281,6 +283,7 @@ public class TransactionService
             if (trans.date < tr.date)
             {
                 transactions.add(i, tr);
+                invalidateData(tr.date);
                 break;
             }
         }
@@ -329,9 +332,14 @@ public class TransactionService
 
     private HashMap<String, SortedData> sortedDataCache = new HashMap<>();
 
+    private String calendarToKey(Calendar cal)
+    {
+        return cal.get(Calendar.YEAR) + "-" + cal.get(Calendar.MONTH) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "-";
+    }
+
     public SortedData getSortedData(Calendar cal, int days)
     {
-        String key = cal.get(Calendar.YEAR) + "-" + cal.get(Calendar.MONTH) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "-" + String.valueOf(days);
+        String key = calendarToKey(cal) + String.valueOf(days);
         if (sortedDataCache.containsKey(key))
             return sortedDataCache.get(key);
 
@@ -340,6 +348,28 @@ public class TransactionService
 
         sortedDataCache.put(key, data);
         return data;
+    }
+
+    private void invalidateData(long stamp)
+    {
+        Object[] keys = sortedDataCache.keySet().toArray();
+        int sz = keys.length;
+        for (int i = 0; i < sz; i++)
+        {
+            String key = (String) keys[i];
+            String[] parts = key.split("-");
+            Calendar calStart = Calendar.getInstance();
+            calStart.set(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+            long keyStart = calStart.getTimeInMillis();
+            Calendar calEnd = Calendar.getInstance();
+            calEnd.set(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+            calEnd.add(Calendar.DAY_OF_YEAR, Integer.parseInt(parts[3]));
+            long keyEnd = calEnd.getTimeInMillis();
+
+
+            if (stamp >= keyStart && stamp <= keyEnd)
+                sortedDataCache.remove(key);
+        }
     }
 
     public float getMonthlyTotal(Calendar c)
@@ -398,7 +428,7 @@ public class TransactionService
         cal.setTimeZone(TimeZone.getDefault());
         cal.setTimeInMillis(c.getTimeInMillis());
         int dow = getdow(cal);
-        cal.add(Calendar.DAY_OF_MONTH, -(dow - 1));
+        cal.add(Calendar.DAY_OF_MONTH, -dow);
 
         float ret = 0.0f;
         SortedData data = getSortedData(cal, 7);

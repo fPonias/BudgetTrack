@@ -30,6 +30,11 @@ import com.munger.budgettrack.view.IncomeEntry;
 import com.munger.budgettrack.view.Ledger;
 import com.munger.budgettrack.view.Overview;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
+
 /**
  * Created by codymunger on 12/22/15.
  */
@@ -84,6 +89,10 @@ public class Main extends AppCompatActivity
         }
         else
         {
+            currentDate = Calendar.getInstance();
+            currentDate.setTimeZone(TimeZone.getDefault());
+            currentDate.setTimeInMillis(System.currentTimeMillis());
+
             dbHelper = new DatabaseHelper(this);
             dbHelper.loadTransactionCategories();
             dbHelper.loadChangeLog();
@@ -310,5 +319,41 @@ public class Main extends AppCompatActivity
         int sz = fm.getBackStackEntryCount();
 
         reloadDepth = sz;
+    }
+
+    public Calendar currentDate;
+
+    public void setDate(Calendar cal)
+    {
+        currentDate = Calendar.getInstance();
+        currentDate.setTimeZone(TimeZone.getDefault());
+        currentDate.setTimeInMillis(cal.getTimeInMillis());
+
+        notifyDateListeners();
+    }
+
+    public static interface DateListener
+    {
+        public void changed();
+    }
+
+    private ArrayList<DateListener> dateListeners = new ArrayList<>();
+
+    public void addDateListener(DateListener listener)
+    {
+        dateListeners.add(listener);
+    }
+
+    public void removeDateListener(DateListener listener)
+    {
+        dateListeners.remove(listener);
+    }
+
+    public void notifyDateListeners()
+    {
+        for(DateListener listener : dateListeners)
+        {
+           listener.changed();
+        }
     }
 }

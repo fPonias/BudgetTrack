@@ -37,6 +37,8 @@ public class Overview extends Fragment
     public TextView totalBudgetMonthTxt;
     public TextView totalAvgMonthTxt;
 
+    public WeekPicker weekPicker;
+
     public TextView remainingCatastropheTxt;
 
     private TransactionService.TransactionsChangedListener dataListener;
@@ -71,6 +73,8 @@ public class Overview extends Fragment
         totalBudgetMonthTxt = (TextView) ret.findViewById(R.id.g_overview_maxBudgetMonth);
         totalAvgMonthTxt = (TextView) ret.findViewById(R.id.g_overview_goalAverageMonth);
 
+        weekPicker = (WeekPicker) ret.findViewById(R.id.g_overview_weekPicker);
+
         remainingCatastropheTxt = (TextView) ret.findViewById(R.id.g_overview_remainingCatstropheTxt);
 
         dataListener = new TransactionService.TransactionsChangedListener() {public void changed()
@@ -78,6 +82,16 @@ public class Overview extends Fragment
             update();
         }};
         Main.instance.transactionService.addChangeListener(dataListener);
+
+        weekPicker.addListener(new WeekPicker.ChangeListener() {public void onDateChange(WeekPicker picker)
+        {
+            Main.instance.setDate(picker.getDateWeek());
+        }});
+
+        Main.instance.addDateListener(new Main.DateListener() {public void changed()
+        {
+            update();
+        }});
 
         return ret;
     }
@@ -180,9 +194,7 @@ public class Overview extends Fragment
         int negativeTextColor = ContextCompat.getColor(Main.instance, R.color.colorNegative);
         com.munger.budgettrack.model.Settings settings = Main.instance.settings;
 
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(System.currentTimeMillis());
-        cal.setTimeZone(TimeZone.getDefault());
+        Calendar cal = Main.instance.currentDate;
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
