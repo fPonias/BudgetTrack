@@ -23,7 +23,6 @@ import com.google.android.gms.drive.MetadataChangeSet;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
-import com.google.android.gms.drive.query.internal.ComparisonFilter;
 import com.munger.budgettrack.Main;
 import com.munger.budgettrack.model.DBDelta;
 

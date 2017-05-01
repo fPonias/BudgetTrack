@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -98,7 +99,9 @@ public class Chart extends Fragment
 
     private void populateMonthly(Calendar cal)
     {
-        chartMonthly.setDescription("");
+        Description desc = new Description();
+        desc.setText("");
+        chartMonthly.setDescription(desc);
         chartMonthly.setBackgroundColor(Color.WHITE);
         chartMonthly.setDrawGridBackground(false);
         chartMonthly.setDrawBarShadow(false);
@@ -129,7 +132,7 @@ public class Chart extends Fragment
             columns[i] = d;
         }
 
-        CombinedData data = new CombinedData(columns);
+        CombinedData data = new CombinedData();
 
         LineData lineData = new LineData();
 
@@ -147,7 +150,9 @@ public class Chart extends Fragment
 
     private void populateWeekly(Calendar c)
     {
-        chartWeekly.setDescription("");
+        Description desc = new Description();
+        desc.setText("");
+        chartWeekly.setDescription(desc);
         chartMonthly.setBackgroundColor(Color.WHITE);
         chartMonthly.setDrawGridBackground(false);
         chartMonthly.setDrawBarShadow(false);
@@ -184,7 +189,7 @@ public class Chart extends Fragment
             columns[i] = d;
         }
 
-        CombinedData data = new CombinedData(columns);
+        CombinedData data = new CombinedData();
 
         LineData lineData = new LineData();
 
@@ -209,8 +214,8 @@ public class Chart extends Fragment
         LineDataSet set = new LineDataSet(entries, "budget goal");
         set.setColor(Color.rgb(240, 70, 70));
         set.setLineWidth(2.5f);
-        set.setCircleSize(0);
-        set.setDrawCubic(true);
+        //set.setCircleSize(0);
+        //set.setDrawCubic(true);
         set.setDrawValues(false);
 
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
@@ -249,8 +254,8 @@ public class Chart extends Fragment
         LineDataSet set = new LineDataSet(entries, "trend");
         set.setColor(Color.rgb(100, 100, 100));
         set.setLineWidth(1.5f);
-        set.setCircleSize(0);
-        set.setDrawCubic(true);
+        //set.setCircleSize(0);
+        //set.setDrawCubic(true);
         set.setDrawValues(false);
 
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
@@ -268,8 +273,8 @@ public class Chart extends Fragment
         LineDataSet set = new LineDataSet(entries, "average expenses");
         set.setColor(Color.rgb(240, 240, 70));
         set.setLineWidth(2.5f);
-        set.setCircleSize(0);
-        set.setDrawCubic(true);
+        //set.setCircleSize(0);
+        //set.setDrawCubic(true);
         set.setDrawValues(false);
 
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
@@ -303,7 +308,7 @@ public class Chart extends Fragment
                 //    list[j] = vals.get(j).amount;
 
 
-                entries.add(new BarEntry(list, i));
+                entries.add(new BarEntry(i, list));
             }
 
             cal.add(Calendar.DAY_OF_MONTH, 1);
@@ -323,12 +328,14 @@ public class Chart extends Fragment
     private void populatePie(PieChart chart, Calendar cal, int days, boolean includeExpenses)
     {
         chart.setUsePercentValues(true);
-        chart.setDescription("");
+        Description desc = new Description();
+        desc.setText("");
+        chart.setDescription(desc);
 
         chart.setDragDecelerationFrictionCoef(0.95f);
 
         chart.setDrawHoleEnabled(false);
-        chart.setHoleColorTransparent(true);
+        //chart.setHoleColorTransparent(true);
 
         //chart.setTransparentCircleColor(Color.WHITE);
         //chart.setTransparentCircleAlpha(110);
@@ -356,7 +363,7 @@ public class Chart extends Fragment
 
     private void setPieData(PieChart chart, Calendar cal, int days, boolean includeExpenses)
     {
-        ArrayList<com.github.mikephil.charting.data.Entry> yVals1 = new ArrayList<com.github.mikephil.charting.data.Entry>();
+        ArrayList<com.github.mikephil.charting.data.PieEntry> yVals1 = new ArrayList<com.github.mikephil.charting.data.PieEntry>();
         ArrayList<String> xVals = new ArrayList<String>();
         HashMap<String, Float> dataSource;
 
@@ -384,7 +391,7 @@ public class Chart extends Fragment
                 xVals.add(count, cat.category);
 
                 float total = dataSource.get(cat.category);
-                yVals1.add(new com.github.mikephil.charting.data.Entry(total, count));
+                yVals1.add(new com.github.mikephil.charting.data.PieEntry(total, count));
 
                 count++;
             }
@@ -417,7 +424,7 @@ public class Chart extends Fragment
 
         dataSet.setColors(colors);
 
-        PieData pdata = new PieData(xVals, dataSet);
+        PieData pdata = new PieData(dataSet);
         pdata.setValueFormatter(new PercentFormatter());
         pdata.setValueTextSize(8f);
         pdata.setValueTextColor(Color.BLACK);
