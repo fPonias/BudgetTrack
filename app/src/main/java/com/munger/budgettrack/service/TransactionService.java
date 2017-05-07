@@ -77,7 +77,7 @@ public class TransactionService
             sort();
             calculateTrend();
 
-            ArrayList<CashFlow> list = Main.instance.cashFlowService.getList(CashFlowService.Type.EXPENDITURE, startCal, daySpan);
+            ArrayList<CashFlow> list = Main.instance.cashFlowService.getList(CashFlowService.Type.EXPENDITURE);
             sortExpenditures(list);
         }
 
@@ -289,6 +289,7 @@ public class TransactionService
         }
 
         tr.commit();
+        indexedTransactions.put(tr.id, tr);
 
         for(TransactionsChangedListener listener : changeListeners)
         {
@@ -449,8 +450,8 @@ public class TransactionService
     {
         int sz = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
-        float income = Main.instance.cashFlowService.getTotal(CashFlowService.Type.INCOME, cal, sz);
-        float expense = Main.instance.cashFlowService.getTotal(CashFlowService.Type.EXPENDITURE, cal, sz);
+        float income = Main.instance.cashFlowService.getTotal(CashFlowService.Type.INCOME);
+        float expense = Main.instance.cashFlowService.getTotal(CashFlowService.Type.EXPENDITURE);
         float monthlyBudget = income - expense;
         monthlyBudget -= Main.instance.settings.emergencyFund;
 

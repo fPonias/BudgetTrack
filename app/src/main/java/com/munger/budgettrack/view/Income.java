@@ -34,7 +34,7 @@ public class Income extends CashFlowBase
     protected String getDeleteMessage(CashFlow tr)
     {
         String message = "Are you sure you want to delete ";
-        message += "$" + tr.amount + " income from " + Transaction.getDateString(tr.startDate);
+        message += "$" + tr.amount;
         return message;
     }
 
@@ -45,7 +45,7 @@ public class Income extends CashFlowBase
 
     protected ArrayList<CashFlow> getData(Calendar cal, int days)
     {
-        ArrayList<CashFlow> list = Main.instance.cashFlowService.getList(CashFlowService.Type.INCOME, cal, days);
+        ArrayList<CashFlow> list = Main.instance.cashFlowService.getList(CashFlowService.Type.INCOME);
         return list;
     }
 
@@ -56,7 +56,7 @@ public class Income extends CashFlowBase
 
     protected String getTotalText(Calendar cal, int days)
     {
-        float total = Main.instance.cashFlowService.getTotal(CashFlowService.Type.INCOME, cal, days);
+        float total = Main.instance.cashFlowService.getTotal(CashFlowService.Type.INCOME);
         return "$" + total;
     }
 }

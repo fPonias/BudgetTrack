@@ -34,7 +34,7 @@ public class Expenditures extends CashFlowBase
     protected String getDeleteMessage(CashFlow tr)
     {
         String message = "Are you sure you want to delete ";
-        message += "$" + tr.amount + " expenditure from " + Transaction.getDateString(tr.startDate);
+        message += "$" + tr.amount;
         return message;
     }
 
@@ -45,7 +45,7 @@ public class Expenditures extends CashFlowBase
 
     protected ArrayList<CashFlow> getData(Calendar cal, int days)
     {
-        return Main.instance.cashFlowService.getList(CashFlowService.Type.EXPENDITURE, cal, days);
+        return Main.instance.cashFlowService.getList(CashFlowService.Type.EXPENDITURE);
     }
 
     protected String getAmountText(float amount)
@@ -55,7 +55,7 @@ public class Expenditures extends CashFlowBase
 
     protected String getTotalText(Calendar cal, int days)
     {
-        float total = Main.instance.cashFlowService.getTotal(CashFlowService.Type.EXPENDITURE, cal, days);
+        float total = Main.instance.cashFlowService.getTotal(CashFlowService.Type.EXPENDITURE);
         return "$" + total;
     }
 }

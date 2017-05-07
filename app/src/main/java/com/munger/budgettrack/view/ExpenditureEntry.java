@@ -22,8 +22,6 @@ public class ExpenditureEntry extends CashFlowEntryBase
 
     protected void constructCashFlow(CashFlow ret)
     {
-        ret.startDate = getDate(startTxt, 0);
-        ret.endDate = getDate(endTxt, Long.MAX_VALUE);
         ret.desc = descTxt.getText().toString();
         ret.amount = getAmount();
         ret.amount = -ret.amount;

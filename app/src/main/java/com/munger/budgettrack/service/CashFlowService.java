@@ -41,8 +41,6 @@ public class CashFlowService
 
         for(Parcelable p : pararr)
             cashFlows.add((CashFlow) p);
-
-        sortData();
     }
 
     public Bundle getState()
@@ -61,9 +59,9 @@ public class CashFlowService
 
     public void loadAll()
     {
-        Cursor cur = Main.instance.dbHelper.db.query(CashFlow.TABLE_NAME, new String[]{"startDate", "endDate", "amount", "desc", "categoryId", "id"},
+        Cursor cur = Main.instance.dbHelper.db.query(CashFlow.TABLE_NAME, new String[]{"amount", "desc", "categoryId", "id"},
                 "", new String[]{},
-                "startDate DESC"
+                "id ASC"
         );
 
         int sz = cur.getCount();
@@ -72,50 +70,21 @@ public class CashFlowService
         while (success)
         {
             CashFlow t = new CashFlow();
-            t.id = cur.getLong(5);
-            String key = cur.getString(0);
-            t.startDate = Transaction.keyToDate(key).getTimeInMillis();
-            key = cur.getString(1);
-            t.endDate = Transaction.keyToDate(key).getTimeInMillis();
-            t.amount = cur.getFloat(2);
-            t.desc = cur.getString(3);
-            t.categoryId = cur.getLong(4);
+            t.amount = cur.getFloat(0);
+            t.desc = cur.getString(1);
+            t.categoryId = cur.getLong(2);
+            t.id = cur.getLong(3);
 
             cashFlows.add(t);
             success = cur.moveToNext();
+            index.put(t.id, t);
         }
 
         cur.close();
-        sortData();
 
         for(CashFlowChangedListener listener : listeners)
         {
             listener.changed();
-        }
-    }
-
-    private void sortData()
-    {
-        income = new HashMap<>();
-        expenditures = new HashMap<>();
-        index = new HashMap<>();
-
-        int sz = cashFlows.size();
-        for (int i = 0; i < sz; i++)
-        {
-            CashFlow item = cashFlows.get(i);
-            String key = Transaction.dateToKey(item.startDate);
-
-            if (item.amount >= 0)
-            {
-                income.put(key, item);
-            }
-            else
-            {
-                expenditures.put(key, item);
-            }
-
-            index.put(item.id, item);
         }
     }
 
@@ -125,9 +94,9 @@ public class CashFlowService
         INCOME
     };
 
-    public float getTotal(Type type, Calendar start, int days)
+    public float getTotal(Type type)
     {
-        ArrayList<CashFlow> list = getList(type, start, days);
+        ArrayList<CashFlow> list = getList(type);
         float ret = 0.0f;
         for (CashFlow flow : list)
             ret += flow.amount;
@@ -138,24 +107,16 @@ public class CashFlowService
             return -ret;
     }
 
-    public ArrayList<CashFlow> getList(Type type, Calendar c, int days)
+    public ArrayList<CashFlow> getList(Type type)
     {
-        Calendar start = Calendar.getInstance();
-        start.setTimeZone(TimeZone.getDefault());
-        start.setTimeInMillis(c.getTimeInMillis());
-        start.set(Calendar.DAY_OF_MONTH, 1);
-        String startkey = Transaction.dateToKey(start);
-        start.add(Calendar.DAY_OF_MONTH, days);
-        String endkey = Transaction.dateToKey(start);
-
-        String where = "startDate < ? and endDate >= ? ";
+        String where = "";
         if (type == Type.EXPENDITURE)
-            where += "and amount < 0";
+            where += "amount < 0";
         else
-            where += "and amount > 0";
+            where += "amount > 0";
 
         Cursor cur = Main.instance.dbHelper.db.query(CashFlow.TABLE_NAME, new String[]{"id"},
-                where, new String[]{endkey, startkey},
+                where, new String[]{},
                 "id ASC"
         );
 
@@ -197,7 +158,7 @@ public class CashFlowService
     {
         tr.delete();
         cashFlows.remove(tr);
-        sortData();
+        index.remove(tr.id);
 
         for(CashFlowChangedListener listener : listeners)
         {
@@ -213,7 +174,7 @@ public class CashFlowService
         if (oldid == -1)
             cashFlows.add(tr);
 
-        sortData();
+        index.put(tr.id, tr);
 
         for(CashFlowChangedListener listener : listeners)
         {

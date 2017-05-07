@@ -29,8 +29,6 @@ public abstract class CashFlowEntryBase extends Fragment
 {
     public EditText descTxt;
     public EditText amountTxt;
-    public EditText startTxt;
-    public EditText endTxt;
     public Spinner categorySpn;
 
     protected ArrayList<TransactionCategory> transCats;
@@ -63,8 +61,6 @@ public abstract class CashFlowEntryBase extends Fragment
         View ret = inflater.inflate(R.layout.fragment_incomeentry, container, false);
         descTxt = (EditText) ret.findViewById(R.id.g_incomeentry_descInput);
 
-        startTxt = (EditText) ret.findViewById(R.id.g_incomeentry_startDateInput);
-        endTxt = (EditText) ret.findViewById(R.id.g_incomeentry_endDateInput);
         amountTxt = (EditText) ret.findViewById(R.id.g_incomeentry_amountInput);
         amountTxt.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED);
 
@@ -151,24 +147,6 @@ public abstract class CashFlowEntryBase extends Fragment
         }
         catch(Exception e){
             amountTxt.setError("invalid amount");
-            return false;
-        }
-
-        try
-        {
-            getDate(startTxt, 0);
-        }
-        catch(Exception e){
-            startTxt.setError("invalid date");
-            return false;
-        }
-
-        try
-        {
-            getDate(endTxt, Long.MAX_VALUE);
-        }
-        catch(Exception e){
-            endTxt.setError("invalid date");
             return false;
         }
 

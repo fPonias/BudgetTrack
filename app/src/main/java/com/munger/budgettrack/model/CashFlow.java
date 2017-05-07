@@ -34,15 +34,11 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     public long id;
     public String desc;
     public float amount;
-    public long startDate;
-    public long endDate;
     public long categoryId;
 
     public CashFlow()
     {
         id = -1;
-        startDate = 0;
-        endDate = 0;
         desc = "";
         amount = 0.0f;
         categoryId = 0;
@@ -51,8 +47,6 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     public CashFlow(Parcel p)
     {
         id = p.readLong();
-        startDate = p.readLong();
-        endDate = p.readLong();
         desc = p.readString();
         amount = p.readFloat();
         categoryId = p.readLong();
@@ -68,8 +62,6 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     public void writeToParcel(Parcel dest, int flags)
     {
         dest.writeLong(id);
-        dest.writeLong(startDate);
-        dest.writeLong(endDate);
         dest.writeString(desc);
         dest.writeFloat(amount);
         dest.writeLong(categoryId);
@@ -78,8 +70,6 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     public ContentValues getContentValues()
     {
         ContentValues values = new ContentValues();
-        values.put("startDate", Transaction.dateToKey(startDate));
-        values.put("endDate", Transaction.dateToKey(endDate));
         values.put("amount", amount);
         values.put("desc", desc);
         values.put("categoryId", categoryId);
@@ -113,8 +103,6 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     {
         String ret = "CREATE TABLE " + TABLE_NAME + " (" +
                 "id INTEGER PRIMARY KEY," +
-                "startDate TEXT," +
-                "endDate TEXT," +
                 "desc TEXT," +
                 "amount FLOAT," +
                 "categoryId INTEGER" +
@@ -126,8 +114,6 @@ public class CashFlow implements DatabaseHelper.DatabaseProxyParcelable
     public static String[] getCreateIndices()
     {
         String[] ret = {
-                "CREATE INDEX cashFlowStartDateIdx ON " + TABLE_NAME + " (startDate)",
-                "CREATE INDEX cashFlowEndDateIdx ON " + TABLE_NAME + "(endDate)",
                 "CREATE INDEX cashFlowCategoryIdIdx ON " + TABLE_NAME + "(categoryId)"
         };
 
