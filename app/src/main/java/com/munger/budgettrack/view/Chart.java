@@ -137,9 +137,9 @@ public class Chart extends Fragment
         LineData lineData = new LineData();
 
 
-        generateGoalData(lineData, budget, max);
-        generateTrendData(lineData, cal, max);
-        data.setData(lineData);
+        //generateGoalData(lineData, budget, max);
+        //generateTrendData(lineData, cal, max);
+        //data.setData(lineData);
         data.setData(generateBarData(cal, max));
 
         chartMonthly.setData(data);
@@ -194,10 +194,10 @@ public class Chart extends Fragment
         LineData lineData = new LineData();
 
 
-        generateGoalData(lineData, budget / max, max);
-        generateAverageData(lineData, average, max);
-        generateTrendData(lineData, cal, max);
-        data.setData(lineData);
+        //generateGoalData(lineData, budget / max, max);
+        //generateAverageData(lineData, average, max);
+        //generateTrendData(lineData, cal, max);
+        //data.setData(lineData);
         data.setData(generateBarData(cal, max));
 
         chartWeekly.setData(data);
@@ -335,13 +335,6 @@ public class Chart extends Fragment
         chart.setDragDecelerationFrictionCoef(0.95f);
 
         chart.setDrawHoleEnabled(false);
-        //chart.setHoleColorTransparent(true);
-
-        //chart.setTransparentCircleColor(Color.WHITE);
-        //chart.setTransparentCircleAlpha(110);
-
-        //chart.setHoleRadius(58f);
-        //chart.setTransparentCircleRadius(61f);
 
         chart.setDrawCenterText(true);
 
@@ -391,7 +384,7 @@ public class Chart extends Fragment
                 xVals.add(count, cat.category);
 
                 float total = dataSource.get(cat.category);
-                yVals1.add(new com.github.mikephil.charting.data.PieEntry(total, count));
+                yVals1.add(new com.github.mikephil.charting.data.PieEntry(total, cat.category));
 
                 count++;
             }
@@ -428,6 +421,7 @@ public class Chart extends Fragment
         pdata.setValueFormatter(new PercentFormatter());
         pdata.setValueTextSize(8f);
         pdata.setValueTextColor(Color.BLACK);
+        chart.setEntryLabelColor(Color.BLACK);
         chart.setData(pdata);
 
         // undo all highlights
