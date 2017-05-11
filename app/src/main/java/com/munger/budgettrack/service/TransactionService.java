@@ -217,8 +217,13 @@ public class TransactionService
     {
         Parcelable[] pararr = state.getParcelableArray("transactions");
         transactions = new ArrayList<>();
+        indexedTransactions = new HashMap<>();
         for(Parcelable p : pararr)
-            transactions.add((Transaction) p);
+        {
+            Transaction t = (Transaction) p;
+            transactions.add(t);
+            indexedTransactions.put(t.id, t);
+        }
     }
 
     public Bundle getState()
@@ -229,6 +234,8 @@ public class TransactionService
         Transaction[] tranArr = new Transaction[sz];
         for (int i = 0; i < sz; i++)
             tranArr[i] = transactions.get(i);
+
+        b.putParcelableArray("transactions", tranArr);
 
         return b;
     }

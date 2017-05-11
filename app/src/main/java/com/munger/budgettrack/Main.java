@@ -73,6 +73,10 @@ public class Main extends AppCompatActivity
 
         if (savedInstanceState != null)
         {
+            currentDate = Calendar.getInstance();
+            currentDate.setTimeZone(TimeZone.getDefault());
+            currentDate.setTimeInMillis(savedInstanceState.getLong("currentDate"));
+
             dbHelper = new DatabaseHelper(this, savedInstanceState.getBundle("dbHelper"));
             settings = new Settings();
             transactionService = new TransactionService(savedInstanceState.getBundle("transactionService"));
@@ -127,6 +131,7 @@ public class Main extends AppCompatActivity
         savedInstanceState.putParcelable("transactionService", transactionService.getState());
         savedInstanceState.putParcelable("cashFlowService", cashFlowService.getState());
         savedInstanceState.putString("currentFragment", currentFragName);
+        savedInstanceState.putLong("currentDate", currentDate.getTimeInMillis());
     }
 
     public final static int RESOLVE_CONNECTION_REQUEST_CODE = 12;

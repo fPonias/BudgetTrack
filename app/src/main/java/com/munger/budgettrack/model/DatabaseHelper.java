@@ -150,8 +150,13 @@ public class DatabaseHelper extends SQLiteOpenHelper
 
         Parcelable[] pararr = state.getParcelableArray("transactionCategories");
         transactionCategories = new ArrayList<>();
+        transactionCategoryIndex = new HashMap<>();
         for (Parcelable p : pararr)
-            transactionCategories.add((TransactionCategory) p);
+        {
+            TransactionCategory cat = (TransactionCategory) p;
+            transactionCategories.add(cat);
+            transactionCategoryIndex.put(cat.id, cat);
+        }
 
         Parcelable[] deltaarr = state.getParcelableArray("changeLog");
         changeLog = new ArrayList<>();

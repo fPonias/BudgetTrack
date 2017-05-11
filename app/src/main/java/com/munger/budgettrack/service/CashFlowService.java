@@ -38,9 +38,14 @@ public class CashFlowService
     {
         Parcelable[] pararr = state.getParcelableArray("cashFlows");
         cashFlows = new ArrayList<>();
+        index = new HashMap<>();
 
         for(Parcelable p : pararr)
-            cashFlows.add((CashFlow) p);
+        {
+            CashFlow c = (CashFlow)p;
+            cashFlows.add(c);
+            index.put(c.id, c);
+        }
     }
 
     public Bundle getState()
